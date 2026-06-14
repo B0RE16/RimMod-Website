@@ -1,0 +1,3958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RimWorld Mod Designer</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.47.0/iconfont/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+* { box-sizing: border-box; }
+html, body { margin:0; padding:0; height:100%; background:#0f1117; overflow:hidden; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color:#cfd6e4;
+  display:flex;
+  flex-direction:column;
+  height:100vh;
+}
+#appTitleBar {
+  height:36px;
+  background:#0f1117;
+  border-bottom:1px solid #1e2535;
+  display:flex;
+  align-items:center;
+  padding:0 14px;
+  flex-shrink:0;
+  gap:10px;
+  user-select:none;
+}
+#appTitleBar .title-logo {
+  font-size:13px;
+  font-weight:700;
+  color:#4a80d4;
+  letter-spacing:0.04em;
+}
+#appTitleBar .title-sep { color:#2e3750; font-size:16px; }
+#appTitleBar .title-mod { font-size:12px; color:#8a95ac; }
+#appRoot {
+  display:flex;
+  flex:1;
+  min-height:0;
+  width:100%;
+  overflow:hidden;
+  background:#161b26;
+  position:relative;
+  user-select:none;
+}
+#appRoot.resizing { cursor:col-resize; }
+#appRoot.resizing-row { cursor:row-resize; }
+button { cursor:pointer; font-family:inherit; }
+input, select, textarea { font-family:inherit; }
+::-webkit-scrollbar { width:8px; height:8px; }
+::-webkit-scrollbar-thumb { background:#3a4254; border-radius:4px; }
+::-webkit-scrollbar-track { background:#1a1f2b; }
+#sidebar {
+  display:flex;
+  flex-direction:column;
+  background:#1a1f2c;
+  border-right:1px solid #1e2535;
+  min-width:160px;
+  max-width:600px;
+  width:280px;
+  flex-shrink:0;
+  overflow:hidden;
+}
+#hDragHandle {
+  width:4px;
+  background:#1e2535;
+  cursor:col-resize;
+  flex-shrink:0;
+  transition:background 0.15s;
+}
+#hDragHandle:hover, #hDragHandle.active { background:#4a80d4; }
+#editorArea {
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  min-width:0;
+}
+#sidebarHeader {
+  padding:8px 10px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  border-bottom:1px solid #1e2535;
+  flex-shrink:0;
+  background:#161b26;
+}
+.hdr-btns { display:flex; gap:3px; flex-wrap:wrap; }
+.hdr-btn {
+  padding:3px 7px;
+  background:#1e2535;
+  border:1px solid #2a3348;
+  color:#a0abbe;
+  border-radius:5px;
+  font-size:11px;
+  display:flex;
+  align-items:center;
+  gap:3px;
+  transition:all 0.12s;
+}
+.hdr-btn:hover { background:#2a3348; color:#cfd6e4; border-color:#4a80d4; }
+#tree {
+  flex:1;
+  overflow-y:auto;
+  padding:4px 6px;
+  min-height:60px;
+}
+#vDragHandle {
+  height:4px;
+  background:#1e2535;
+  cursor:row-resize;
+  flex-shrink:0;
+  transition:background 0.15s;
+}
+#vDragHandle:hover, #vDragHandle.active { background:#4a80d4; }
+#previewSection {
+  display:flex;
+  flex-direction:column;
+  border-top:1px solid #1e2535;
+  min-height:60px;
+  max-height:400px;
+  height:200px;
+  flex-shrink:0;
+}
+#previewHeader {
+  padding:6px 10px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  cursor:pointer;
+  user-select:none;
+  flex-shrink:0;
+  border-bottom:1px solid #1e2535;
+  background:#161b26;
+}
+#previewLabel { color:#6b7a96; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.05em; }
+#previewChevron { font-size:10px; color:#6b7a96; }
+#previewBodyWrap {
+  flex:1;
+  overflow:auto;
+  min-height:0;
+}
+#previewBody {
+  margin:0;
+  padding:8px 12px;
+  font-family:'SF Mono',Consolas,Menlo,monospace;
+  font-size:11px;
+  line-height:1.6;
+  color:#8a9bb8;
+  white-space:pre-wrap;
+  outline:none;
+}
+#imagePreviewWrap {
+  display:none;
+  align-items:center;
+  justify-content:center;
+  background:#0f1117;
+  padding:12px;
+  height:100%;
+}
+#imagePreviewWrap img {
+  max-width:100%;
+  max-height:150px;
+  object-fit:contain;
+  image-rendering:pixelated;
+}
+#previewEmpty { padding:10px 12px; color:#3d4658; font-size:11px; }
+#sidebarBottom {
+  padding:6px 8px;
+  border-top:1px solid #1e2535;
+  display:flex;
+  gap:5px;
+  flex-shrink:0;
+  background:#161b26;
+}
+#sidebarBottom button {
+  flex:1;
+  font-size:11px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:4px;
+  background:#1e2535;
+  border:1px solid #2a3348;
+  color:#a0abbe;
+  border-radius:5px;
+  height:28px;
+  transition:all 0.12s;
+}
+#sidebarBottom button:hover { background:#2a3348; color:#cfd6e4; }
+#editorEmpty {
+  flex:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:#3d4658;
+  padding:2rem;
+  text-align:center;
+}
+#editorContent {
+  flex:1;
+  display:none;
+  flex-direction:column;
+  min-height:0;
+}
+#editorTopBar {
+  padding:6px 12px;
+  border-bottom:1px solid #1e2535;
+  background:#161b26;
+  color:#9aa5b8;
+  font-size:12px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  flex-shrink:0;
+}
+#editorTopBar .spacer { flex:1; }
+#toggleFormBtn {
+  display:none;
+  padding:3px 10px;
+  background:#2f3645;
+  border:1px solid #3a4254;
+  color:#4a80d4;
+  border-radius:5px;
+  font-size:11px;
+  cursor:pointer;
+}
+#toggleFormBtn:hover { background:#3a4254; }
+#toggleFormBtn.active { background:#4a80d4; color:#fff; border-color:#4a80d4; }
+#fileEditor {
+  flex:1;
+  resize:none;
+  border:none;
+  outline:none;
+  background:#131720;
+  color:#d6dceb;
+  font-family:'SF Mono',Consolas,Menlo,monospace;
+  font-size:13px;
+  line-height:1.6;
+  padding:12px 16px;
+  min-height:0;
+}
+#bigImagePreviewWrap {
+  flex:1;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  background:#13171f;
+  min-height:0;
+}
+#bigImagePreviewWrap img {
+  max-width:100%;
+  max-height:100%;
+  object-fit:contain;
+  image-rendering:pixelated;
+}
+/* Form Editor */
+#formEditor {
+  flex:1;
+  display:none;
+  overflow-y:auto;
+  background:#1a1f2b;
+  padding:12px 16px;
+  min-height:0;
+}
+.fe-section {
+  border:1px solid #323a4a;
+  border-radius:6px;
+  margin-bottom:10px;
+  overflow:hidden;
+}
+.fe-section-hdr {
+  background:#252b38;
+  padding:7px 12px;
+  font-size:11px;
+  font-weight:700;
+  color:#4a80d4;
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  user-select:none;
+}
+.fe-section-hdr:hover { background:#2c333f; }
+.fe-section-body { padding:10px 12px; }
+.fe-row {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-bottom:8px;
+  flex-wrap:wrap;
+}
+.fe-row label {
+  font-size:10.5px;
+  font-weight:600;
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+  color:#7a8fad;
+  min-width:130px;
+  flex-shrink:0;
+}
+.fe-row input, .fe-row select, .fe-row textarea {
+  flex:1;
+  min-width:80px;
+  background:#1e2430;
+  border:1px solid #3a4254;
+  color:#cfd6e4;
+  border-radius:5px;
+  padding:4px 8px;
+  font-size:12px;
+}
+.fe-row textarea { min-height:60px; resize:vertical; }
+.fe-row input:focus, .fe-row select:focus, .fe-row textarea:focus {
+  outline:1px solid #4a80d4;
+  border-color:#4a80d4;
+}
+.fe-unknown {
+  background:rgba(255,165,0,0.04);
+  border:1px dashed rgba(255,165,0,0.2);
+  border-radius:4px;
+  padding:6px 8px;
+  margin-bottom:6px;
+}
+.fe-unknown .u-lbl { font-size:11px; font-family:monospace; color:#e0a060; margin-bottom:3px; }
+.fe-unknown input, .fe-unknown textarea {
+  width:100%;
+  background:#1e2430;
+  border:1px solid #3a4254;
+  color:#cfd6e4;
+  border-radius:4px;
+  padding:3px 7px;
+  font-size:12px;
+}
+.cb-group { display:flex; flex-wrap:wrap; gap:5px; }
+.cb-group label {
+  display:flex;
+  align-items:center;
+  gap:4px;
+  font-size:11px;
+  cursor:pointer;
+  background:#252b38;
+  padding:3px 8px;
+  border-radius:4px;
+  border:1px solid #3a4254;
+}
+.cb-group label:hover { border-color:#4a80d4; }
+.cb-group input[type=checkbox] { accent-color:#4a80d4; }
+.tool-card {
+  background:#252b38;
+  border:1px solid #323a4a;
+  border-radius:5px;
+  padding:8px;
+  margin-bottom:6px;
+}
+.tool-card-hdr {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:8px;
+  font-size:11px;
+  font-weight:600;
+  color:#cfd6e4;
+}
+.cost-row { display:flex; gap:6px; align-items:center; margin-bottom:5px; }
+.cost-row input {
+  flex:1;
+  background:#1e2430;
+  border:1px solid #3a4254;
+  color:#cfd6e4;
+  border-radius:4px;
+  padding:3px 7px;
+  font-size:12px;
+}
+.rm-btn {
+  background:none;
+  border:none;
+  color:#c0392b;
+  cursor:pointer;
+  font-size:16px;
+  line-height:1;
+  padding:0 2px;
+}
+.stat-row { display:flex; gap:6px; align-items:center; margin-bottom:5px; }
+.stat-row select, .stat-row input {
+  background:#1e2430;
+  border:1px solid #3a4254;
+  color:#cfd6e4;
+  border-radius:4px;
+  padding:3px 7px;
+  font-size:12px;
+}
+.stat-row select { flex:2; }
+.stat-row input { flex:1; }
+.add-btn {
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  padding:3px 10px;
+  background:#2f3645;
+  border:1px solid #3a4254;
+  border-radius:4px;
+  cursor:pointer;
+  font-size:11px;
+  color:#4a80d4;
+  margin-top:4px;
+}
+.add-btn:hover { background:#3a4254; }
+.sd-wrap { position:relative; flex:1; }
+.sd-wrap input { width:100%; }
+.sd-drop {
+  position:absolute;
+  top:100%;
+  left:0;
+  right:0;
+  background:#2c3242;
+  border:1px solid #3a4254;
+  border-radius:4px;
+  max-height:160px;
+  overflow-y:auto;
+  z-index:2000;
+  display:none;
+}
+.sd-drop.open { display:block; }
+.sd-item { padding:5px 9px; font-size:11px; cursor:pointer; color:#cfd6e4; }
+.sd-item:hover { background:#4a80d4; color:#fff; }
+/* Dependency highlight */
+.tree-node-dep { background:rgba(74,128,212,0.12) !important; border-left:2px solid #4a80d4; }
+.tree-node-dep .tree-label { color:#7aabf0 !important; }
+/* Research Tree (float panel content) */
+#researchTreeCanvas { flex:1; overflow:auto; background:#0f1117; cursor:grab; position:relative; }
+#researchTreeCanvas:active { cursor:grabbing; }
+#researchTreeSvg { display:block; }
+.rt-node {
+  cursor:pointer;
+  transition:filter 0.15s;
+}
+.rt-node:hover { filter:brightness(1.3); }
+#researchTreeTooltip {
+  position:fixed;
+  background:#1e2535;
+  border:1px solid #2a3348;
+  border-radius:6px;
+  padding:8px 12px;
+  font-size:11px;
+  color:#cfd6e4;
+  pointer-events:none;
+  display:none;
+  z-index:9999;
+  max-width:220px;
+  line-height:1.5;
+}
+/* Create Content (float panel content) */
+#createContentView {
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+}
+#createContentTopBar {
+  padding:6px 12px;
+  border-bottom:1px solid #1e2535;
+  background:#161b26;
+  color:#9aa5b8;
+  font-size:12px;
+  flex-shrink:0;
+}
+#createContentBody {
+  flex:1;
+  overflow-y:auto;
+  padding:16px 20px;
+  background:#1a1f2c;
+}
+.cc-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.cc-field { display:flex; flex-direction:column; gap:4px; }
+.cc-label { color:#6b7a96; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.04em; }
+.cc-input {
+  background:#1a1f2c;
+  color:#cfd6e4;
+  border:1px solid #2a3348;
+  border-radius:6px;
+  padding:6px 10px;
+  font-size:13px;
+  width:100%;
+}
+.cc-input:focus { outline:1px solid #4a80d4; border-color:#4a80d4; }
+.cc-input.invalid { border-color:#c0392b; }
+.cc-panel {
+  border:1px solid #2a3348;
+  border-radius:6px;
+  padding:12px;
+  margin-top:12px;
+  background:#1a1f2c;
+}
+.cc-panel-title {
+  color:#6b7a96;
+  font-size:11px;
+  font-weight:700;
+  margin-bottom:8px;
+  text-transform:uppercase;
+  letter-spacing:0.05em;
+}
+.cc-panel pre {
+  margin:0;
+  font-family:'SF Mono',Consolas,Menlo,monospace;
+  font-size:11px;
+  line-height:1.5;
+  color:#8a9bb8;
+  white-space:pre-wrap;
+}
+.cc-checkbox-row { display:flex; flex-direction:column; gap:6px; }
+.cc-checkbox-row label {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:13px;
+  color:#cfd6e4;
+  cursor:pointer;
+}
+.cc-target-row {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:13px;
+}
+#ccTargetName { color:#4a80d4; font-weight:500; }
+#ccChooseFolder {
+  font-size:11px;
+  padding:3px 8px;
+  background:#1e2535;
+  border:1px solid #2a3348;
+  color:#a0abbe;
+  border-radius:5px;
+}
+#ccChooseFolder:hover { background:#2a3348; }
+.cc-info-text { font-size:12px; color:#6b7a96; line-height:1.5; }
+.cc-buttons { display:flex; gap:8px; margin-top:16px; padding-bottom:8px; }
+#ccGenerate {
+  background:#4a80d4;
+  color:#fff;
+  border:none;
+  border-radius:6px;
+  padding:8px 20px;
+  font-size:13px;
+  font-weight:500;
+}
+#ccGenerate:hover { background:#5590e4; }
+#ccCancel {
+  background:#1e2535;
+  color:#a0abbe;
+  border:1px solid #2a3348;
+  border-radius:6px;
+  padding:8px 20px;
+  font-size:13px;
+}
+#ccCancel:hover { background:#2a3348; color:#cfd6e4; }
+/* Core Defs Browser (float panel content) */
+#coreDefsBody {
+  flex:1;
+  display:flex;
+  min-height:0;
+}
+#coreDefsCatPanel {
+  width:210px;
+  flex-shrink:0;
+  border-right:1px solid #1e2535;
+  overflow-y:auto;
+  display:flex;
+  flex-direction:column;
+  background:#1a1f2c;
+}
+#coreDefsSearch {
+  padding:6px 10px;
+  background:#131720;
+  border:none;
+  border-bottom:1px solid #1e2535;
+  color:#cfd6e4;
+  font-size:11px;
+  width:100%;
+  flex-shrink:0;
+  outline:none;
+}
+#coreDefsCatList { flex:1; overflow-y:auto; }
+.cd-cat {
+  padding:5px 12px;
+  font-size:11px;
+  color:#8a95ac;
+  cursor:pointer;
+  border-bottom:1px solid #161b26;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.cd-cat:hover { background:#1e2535; color:#cfd6e4; }
+.cd-cat.active { background:#2a3a5e; color:#7aabf0; border-left:2px solid #4a80d4; }
+.cd-cat-count { font-size:10px; opacity:.5; background:#131720; border-radius:3px; padding:1px 5px; }
+#coreDefsListPanel {
+  width:240px;
+  flex-shrink:0;
+  border-right:1px solid #1e2535;
+  overflow-y:auto;
+  display:flex;
+  flex-direction:column;
+  background:#161b26;
+}
+#coreDefsListSearch {
+  padding:6px 10px;
+  background:#131720;
+  border:none;
+  border-bottom:1px solid #1e2535;
+  color:#cfd6e4;
+  font-size:11px;
+  width:100%;
+  flex-shrink:0;
+  outline:none;
+}
+#coreDefsListItems { flex:1; overflow-y:auto; }
+.cd-def-item {
+  padding:5px 12px;
+  font-size:11px;
+  cursor:pointer;
+  border-bottom:1px solid #1a1f2c;
+}
+.cd-def-item .cd-def-name { color:#cfd6e4; }
+.cd-def-item .cd-def-tag { color:#4a5570; font-size:10px; margin-top:1px; }
+.cd-def-item:hover { background:#1e2535; }
+.cd-def-item.active { background:#2a3a5e; border-left:2px solid #4a80d4; }
+.cd-def-item.active .cd-def-name { color:#7aabf0; }
+.cd-def-item.active .cd-def-tag { color:#5a7aa0; }
+#coreDefsPreviewPanel {
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  min-width:0;
+  background:#0f1117;
+}
+#coreDefsPreviewBar {
+  padding:6px 12px;
+  border-bottom:1px solid #1e2535;
+  background:#161b26;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-shrink:0;
+  min-height:36px;
+}
+#coreDefsPreviewName { font-size:12px; font-weight:600; color:#cfd6e4; flex:1; }
+#coreDefsCopyBtn {
+  background:#4a80d4;
+  color:#fff;
+  border:none;
+  border-radius:6px;
+  padding:5px 14px;
+  font-size:12px;
+  display:block;
+  opacity:0.4;
+  pointer-events:none;
+  transition:opacity 0.15s;
+}
+#coreDefsCopyBtn.ready { opacity:1; pointer-events:auto; }
+#coreDefsCopyBtn:hover { background:#5590e4; }
+#coreDefsPreviewXml {
+  flex:1;
+  overflow:auto;
+  padding:12px 16px;
+  margin:0;
+  font-family:'SF Mono',Consolas,Menlo,monospace;
+  font-size:12px;
+  line-height:1.6;
+  color:#8a9bb8;
+  white-space:pre;
+  background:#0f1117;
+}
+#coreDefsLoadPrompt {
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  color:#3d4658;
+  text-align:center;
+  padding:2rem;
+  background:#0f1117;
+}
+#coreDefsLoadBtn {
+  background:#4a80d4;
+  color:#fff;
+  border:none;
+  border-radius:6px;
+  padding:9px 22px;
+  font-size:13px;
+  font-weight:500;
+}
+#coreDefsLoadBtn:hover { background:#5590e4; }
+.context-menu {
+  position:absolute;
+  background:#1e2535;
+  border:1px solid #2a3348;
+  border-radius:7px;
+  box-shadow:0 8px 24px rgba(0,0,0,0.5);
+  padding:4px;
+  z-index:1000;
+  min-width:150px;
+  font-size:12px;
+}
+.ctx-item {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:6px 10px;
+  border-radius:4px;
+  cursor:pointer;
+  color:#cfd6e4;
+}
+.ctx-item:hover { background:#2a3348; }
+.ctx-item.disabled { color:#3d4658; cursor:default; pointer-events:none; }
+.ctx-item i { font-size:14px; }
+.ctx-sep { height:1px; background:#1e2535; margin:3px 0; }
+.toast {
+  position:absolute;
+  bottom:60px;
+  left:50%;
+  transform:translateX(-50%);
+  background:#4a80d4;
+  color:#fff;
+  padding:8px 16px;
+  border-radius:6px;
+  font-size:12px;
+  z-index:2000;
+  pointer-events:none;
+  opacity:1;
+  transition:opacity 0.4s;
+}
+.toast.fade { opacity:0; }
+/* Form field color coding */
+.fe-row input[data-kind="path"]   { border-left:3px solid #a07ad4; background:#1a1a2e; }
+.fe-row input[data-kind="defref"] { border-left:3px solid #4a80d4; background:#1a1f2e; }
+.fe-row input[data-kind="number"] { border-left:3px solid #5ab47a; background:#1a2a1e; }
+.fe-row input[data-kind="color"]  { border-left:3px solid #d4904a; background:#2a1e10; }
+.fe-row input[data-kind="text"]   { border-left:3px solid #6b7a96; }
+.fe-row textarea[data-kind="text"]{ border-left:3px solid #6b7a96; }
+.fe-row select[data-kind="enum"]  { border-left:3px solid #7ab4c0; }
+.sf-slider { accent-color:#5ab47a; }
+/* Smart field widgets */
+.sf-path-wrap { display:flex; gap:4px; flex:1; }
+.sf-path-wrap input { flex:1; }
+.sf-browse-btn {
+  padding:3px 8px; background:#1e2535; border:1px solid #2a3348;
+  color:#4a80d4; border-radius:4px; font-size:11px; cursor:pointer; white-space:nowrap; flex-shrink:0;
+}
+.sf-browse-btn:hover { background:#2a3348; }
+.sf-path-drop {
+  position:absolute; top:100%; left:0; right:0;
+  background:#1e2535; border:1px solid #2a3348; border-radius:5px;
+  max-height:180px; overflow-y:auto; z-index:3000; display:none; font-size:11px;
+}
+.sf-path-drop.open { display:block; }
+.sf-path-item { padding:5px 10px; cursor:pointer; color:#cfd6e4; border-bottom:1px solid #161b26; }
+.sf-path-item:hover { background:#4a80d4; color:#fff; }
+.sf-path-item .sf-pi-sub { font-size:10px; color:#6b7a96; }
+.sf-tex-preview { width:48px; height:48px; object-fit:contain; image-rendering:pixelated; border:1px solid #2a3348; border-radius:4px; background:#0f1117; flex-shrink:0; }
+.sf-tex-preview.hidden { display:none; }
+.sf-warn { font-size:10px; color:#e0a060; padding:2px 6px; background:rgba(224,160,96,0.1); border-radius:3px; flex-shrink:0; }
+.sf-color-wrap { display:flex; gap:6px; align-items:center; flex:1; }
+.sf-color-swatch { width:28px; height:28px; border:none; border-radius:4px; cursor:pointer; padding:2px; background:#1e2535; flex-shrink:0; }
+.sf-slider-wrap { display:flex; gap:6px; align-items:center; flex:1; }
+.sf-slider { flex:2; accent-color:#4a80d4; }
+.sf-slider-num { width:60px !important; flex:none !important; }
+.sf-def-wrap { position:relative; flex:1; }
+.sf-def-wrap input { width:100%; }
+.if-builder { display:flex; flex-direction:column; gap:6px; padding:6px 0; }
+.if-row { display:flex; gap:6px; align-items:center; }
+.if-row input { flex:1; background:#1e2535; border:1px solid #2a3348; color:#cfd6e4; border-radius:4px; padding:3px 7px; font-size:12px; }
+.if-tag { display:inline-flex; align-items:center; gap:3px; background:#2a3a5e; color:#7aabf0; border-radius:3px; padding:2px 7px; font-size:11px; }
+.if-tag span { cursor:pointer; color:#e05e5e; }
+.if-tags { display:flex; flex-wrap:wrap; gap:4px; }
+/* Floating Panels */
+.fp {
+  position:absolute;
+  background:#1a1f2c;
+  border:1px solid #2a3348;
+  border-radius:8px;
+  box-shadow:0 16px 48px rgba(0,0,0,0.65);
+  display:flex;
+  flex-direction:column;
+  min-width:280px;
+  min-height:180px;
+  z-index:200;
+  overflow:hidden;
+  contain:layout;
+}
+.fp.fp-maximized {
+  left:0 !important; top:0 !important;
+  width:100% !important; height:100% !important;
+  border-radius:0;
+}
+.fp-bar {
+  background:#161b26;
+  border-bottom:1px solid #1e2535;
+  padding:5px 8px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  cursor:move;
+  user-select:none;
+  flex-shrink:0;
+  height:32px;
+}
+.fp-title { flex:1; font-size:11px; font-weight:700; color:#a0abbe; letter-spacing:0.03em; }
+.fp-btn {
+  background:none;
+  border:none;
+  color:#4a5570;
+  cursor:pointer;
+  font-size:14px;
+  line-height:1;
+  padding:2px 4px;
+  border-radius:3px;
+  transition:color 0.12s;
+}
+.fp-btn:hover { color:#cfd6e4; background:#2a3348; }
+.fp-btn.close:hover { color:#e05e5e; }
+.fp-body { flex:1; overflow:auto; min-height:0; display:flex; flex-direction:column; }
+.fp-rh-r { position:absolute; right:0; top:8px; bottom:8px; width:5px; cursor:ew-resize; border-radius:3px; }
+.fp-rh-b { position:absolute; bottom:0; left:8px; right:8px; height:5px; cursor:ns-resize; border-radius:3px; }
+.fp-rh-br { position:absolute; right:0; bottom:0; width:14px; height:14px; cursor:nwse-resize; z-index:1; }
+.fp-rh-bl { position:absolute; left:0; bottom:0; width:14px; height:14px; cursor:nesw-resize; z-index:1; }
+.fp-rh-r:hover,.fp-rh-b:hover,.fp-rh-br:hover,.fp-rh-bl:hover { background:rgba(74,128,212,0.3); }
+</style>
+</head>
+<body>
+<div id="appTitleBar">
+  <span class="title-logo">⬡ RimWorld Mod Designer</span>
+  <span style="font-size:10px;color:#3a4a5e;font-weight:600;background:#161b26;border:1px solid #1e2535;padding:1px 6px;border-radius:3px;">v1.8</span>
+  <span class="title-sep">·</span>
+  <span class="title-mod" id="titleModName">New Mod</span>
+</div>
+<div id="appRoot">
+
+  <div id="sidebar">
+    <div id="sidebarHeader">
+      <span style="font-weight:600;color:#cfd6e4;font-size:13px;">Mod Files</span>
+      <div class="hdr-btns">
+        <button class="hdr-btn" id="newFolder">+ Folder</button>
+        <button class="hdr-btn" id="newFile">+ File</button>
+        <button class="hdr-btn" id="importImage">+ Image</button>
+        <button class="hdr-btn" id="createContentBtn">+ Content</button>
+        <button class="hdr-btn" id="coreDefsBtn">⊞ Core</button>
+        <button class="hdr-btn" id="researchTreeBtn">⬡ Research</button>
+      </div>
+    </div>
+    <div id="tree"></div>
+    <div id="vDragHandle"></div>
+    <div id="previewSection">
+      <div id="previewHeader">
+        <span id="previewLabel">Preview</span>
+        <span id="previewChevron">▾</span>
+      </div>
+      <div id="previewBodyWrap">
+        <pre id="previewBody" style="display:none;"></pre>
+        <div id="imagePreviewWrap"><img id="imagePreview" alt=""/></div>
+        <div id="previewEmpty">Select a file to preview it here.</div>
+      </div>
+    </div>
+    <div id="sidebarBottom">
+      <button id="importZip"><i class="ti ti-upload"></i> Import .zip</button>
+      <button id="exportZip"><i class="ti ti-download"></i> Export .zip</button>
+    </div>
+  </div>
+
+  <div id="hDragHandle"></div>
+
+  <div id="editorArea">
+    <div id="editorEmpty">
+      <div>
+        <i class="ti ti-file-text" style="font-size:40px;display:block;margin:0 auto 12px;"></i>
+        Select a file to view or edit
+      </div>
+    </div>
+
+    <div id="editorContent">
+      <div id="editorTopBar">
+        <span id="fileTypeIcon" style="font-size:14px;"></span>
+        <span id="fileNameLabel"></span>
+        <span class="spacer"></span>
+        <button id="toggleFormBtn">⬡ Visual Form</button>
+      </div>
+      <textarea id="fileEditor" spellcheck="false"></textarea>
+      <div id="formEditor"></div>
+      <div id="bigImagePreviewWrap"><img id="bigImagePreview" alt=""/></div>
+    </div>
+
+  </div><!-- end #editorArea -->
+
+</div><!-- end #appRoot -->
+
+<!-- Float panel content templates -->
+<div id="createContentView" style="display:none;flex-direction:column;min-height:0;flex:1;">
+      <div id="createContentTopBar">Create Content — fill in the form below and click Generate</div>
+      <div id="createContentBody">
+        <div class="cc-grid">
+          <div class="cc-field">
+            <label class="cc-label">Def Type</label>
+            <select id="ccDefType" class="cc-input">
+              <option value="ThingDef">ThingDef</option>
+              <option value="RecipeDef">RecipeDef</option>
+              <option value="ResearchProjectDef">ResearchProjectDef</option>
+              <option value="TraitDef">TraitDef</option>
+              <option value="ThoughtDef">ThoughtDef</option>
+              <option value="HediffDef">HediffDef</option>
+              <option value="PawnKindDef">PawnKindDef</option>
+            </select>
+          </div>
+          <div class="cc-field">
+            <label class="cc-label">Template</label>
+            <select id="ccTemplate" class="cc-input"></select>
+          </div>
+          <div class="cc-field">
+            <label class="cc-label">Display Name</label>
+            <input id="ccName" class="cc-input" placeholder="e.g. Iron Sword" type="text"/>
+          </div>
+          <div class="cc-field">
+            <label class="cc-label">DefName</label>
+            <input id="ccDefName" class="cc-input" placeholder="e.g. MeleeWeapon_IronSword" type="text"/>
+          </div>
+        </div>
+
+        <div class="cc-panel">
+          <div class="cc-panel-title">Target Folder</div>
+          <div class="cc-target-row">
+            <span style="color:#9aa5b8;font-size:12px;">Destination:</span>
+            <span id="ccTargetName">Defs</span>
+            <button id="ccChooseFolder">Change</button>
+          </div>
+          <div id="ccFolderHint" style="display:none;font-size:11px;color:#4a80d4;margin-top:6px;">Click any folder in the file tree to set it as the target.</div>
+        </div>
+
+        <div class="cc-panel">
+          <div class="cc-panel-title">Dependencies</div>
+          <div class="cc-checkbox-row">
+            <label id="lbl-recipe"><input type="checkbox" id="ccRecipe" checked> Generate Recipe File</label>
+            <label id="lbl-research"><input type="checkbox" id="ccResearch"> Generate Research File</label>
+            <label id="lbl-localization"><input type="checkbox" id="ccLocalization" checked> Generate Localization File</label>
+            <label id="lbl-texture"><input type="checkbox" id="ccTexture" checked> Generate Texture Placeholder</label>
+          </div>
+        </div>
+
+        <div class="cc-panel">
+          <div class="cc-panel-title">Template Information</div>
+          <div id="ccTemplateInfo" class="cc-info-text">Select a template above.</div>
+        </div>
+
+        <div class="cc-panel">
+          <div class="cc-panel-title">Files to Generate</div>
+          <pre id="ccFilesPreview">—</pre>
+        </div>
+
+        <div class="cc-panel">
+          <div class="cc-panel-title">XML Preview</div>
+          <pre id="ccXmlPreview"></pre>
+        </div>
+
+        <div class="cc-buttons">
+          <button id="ccGenerate">Generate</button>
+          <button id="ccCancel">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+<!-- Float panel content templates (hidden, moved into panels at runtime) -->
+<div id="coreDefsContent" style="display:none;flex:1;flex-direction:column;min-height:0;">
+  <div id="coreDefsBody" style="flex:1;display:flex;min-height:0;">
+    <div id="coreDefsLoadPrompt">
+      <div style="font-size:32px;">📦</div>
+      <div style="font-size:14px;color:#cfd6e4;font-weight:500;">Load a RimWorld Defs.zip</div>
+      <div style="font-size:12px;max-width:320px;">Export the Defs folder from your RimWorld installation as a zip, then load it here to browse all vanilla defs and copy them as templates.</div>
+      <button id="coreDefsLoadBtn"><i class="ti ti-upload"></i> Load Defs.zip</button>
+      <input type="file" id="coreDefsFileInput" accept=".zip" style="display:none;">
+    </div>
+    <div id="coreDefsBrowserPanel" style="display:none;flex:1;min-height:0;flex-direction:row;width:100%;">
+      <div id="coreDefsCatPanel">
+        <input id="coreDefsSearch" placeholder="Filter categories…" autocomplete="off">
+        <div id="coreDefsCatList"></div>
+      </div>
+      <div id="coreDefsListPanel">
+        <input id="coreDefsListSearch" placeholder="Search defs…" autocomplete="off">
+        <div id="coreDefsListItems"></div>
+      </div>
+      <div id="coreDefsPreviewPanel">
+        <div id="coreDefsPreviewBar">
+          <span id="coreDefsPreviewName" style="color:#6b7488;font-size:12px;">Select a def to preview</span>
+          <button id="coreDefsCopyBtn">⊕ Copy to Mod</button>
+        </div>
+        <pre id="coreDefsPreviewXml"></pre>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="researchTreeContent" style="display:none;flex:1;flex-direction:column;min-height:0;">
+  <div id="researchTreeCanvas" style="flex:1;overflow:auto;background:#0f1117;cursor:grab;position:relative;">
+    <svg id="researchTreeSvg"></svg>
+  </div>
+</div>
+<div id="researchTreeTooltip"></div>
+
+<input type="file" id="fileInput" accept=".zip" style="display:none;">
+<input type="file" id="imageInput" accept="image/*" multiple style="display:none;">
+
+<script>
+(function(){
+
+// ── Constants ──────────────────────────────────────────────────────────────────
+const RESEARCH_DEFS = ['AdvancedFabrication','AirConditioning','Autodoors','Batteries','BiofuelRefining','Bionics','BlowbackOperation','Brewing','CarpetMaking','ChargedShot','Cocoa','ColoredLights','ComplexClothing','ComplexFurniture','Cryptosleep','DeepDrilling','Devilstrand','DrugProduction','Electricity','Fabrication','Firefoam','FlakArmor','FlatscreenTelevision','FoamTurret','GasOperation','GeothermalPower','GoJuiceProduction','Greatbow','GroundPenetratingScanner','GunTurrets','Gunsmithing','HeavyTurrets','HospitalBed','Hydroponics','IEDs','LongBlades','LongRangeMineralScanner','Machining','MedicineProduction','MicroelectronicsBasics','MoisturePump','Mortars','MultiAnalyzer','MultibarrelWeapons','NutrientPaste','PackagedSurvivalMeal','PassiveCooler','Pemmican','PenoxycylineProduction','PlateArmor','PoweredArmor','PrecisionRifling','Prosthetics','PsychiteRefining','PsychoidBrewing','ReconArmor','RecurveBow','RocketswarmLauncher','ShieldBelt','ShipBasics','ShipComputerCore','ShipCryptosleep','ShipEngine','ShipReactor','ShipSensorCluster','Smithing','SmokepopBelt','SniperTurret','SolarPanels','SterileMaterials','Stonecutting','TransportPod','TreeSowing','TubeTelevision','VitalsMonitor','WakeUpProduction','WatermillGenerator'];
+const STUFF_CATS = ['Metallic','Woody','Stony','Fabric','Leathery'];
+const APPAREL_LAYERS = ['OnSkin','Middle','Shell','Belt','Overhead','EyeCover'];
+const BODY_PARTS = ['Torso','Neck','Head','LeftArm','RightArm','LeftHand','RightHand','LeftLeg','RightLeg','LeftFoot','RightFoot','FullHead','UpperHead','Shoulders'];
+const ALL_STATS = ['MaxHitPoints','Beauty','Flammability','Mass','WorkToMake','WorkToBuild','DeteriorationRate','MarketValue','Cleanliness','Comfort','MedicalPotency','SocialImpact','MeleeWeapon_DamageMultiplier','MeleeWeapon_CooldownMultiplier','RangedWeapon_Cooldown','AccuracyTouch','AccuracyShort','AccuracyMedium','AccuracyLong','StuffEffectMultiplierArmor','StuffEffectMultiplierInsulation_Cold','StuffEffectMultiplierInsulation_Heat','ArmorRating_Blunt','ArmorRating_Sharp','ArmorRating_Heat','EquipDelay','WorkTableWorkSpeedFactor'];
+const MELEE_CAPS = ['Cut','Blunt','Stab','Poke','Scratch','Bite','Headbutt','Punch','LeftHook','RightHook'];
+const SKILL_DEFS = ['Animals','Artistic','Construction','Cooking','Crafting','Intellectual','Medicine','Mining','Plants','Shooting','Social'];
+const TECH_LEVELS = ['Neolithic','Medieval','Industrial','Spacer','Ultra','Archotech'];
+
+// ── State ──────────────────────────────────────────────────────────────────────
+let data = {
+  type:'folder', name:'MyRimworldMod', open:true, id:'root',
+  children:[
+    {type:'folder', name:'About', open:true, id:'about', children:[
+      {type:'file', name:'About.xml', id:'about-xml', kind:'text', content:'<?xml version="1.0" encoding="utf-8" ?>\n<ModMetaData>\n  <name>MyRimworldMod</name>\n  <author>YourName</author>\n  <packageId>yourname.myrimworldmod</packageId>\n  <supportedVersions>\n    <li>1.5</li>\n  </supportedVersions>\n  <description>A description of your mod.</description>\n</ModMetaData>'}
+    ]},
+    {type:'folder', name:'Defs', open:false, id:'defs', children:[]},
+    {type:'folder', name:'Textures', open:false, id:'tex', children:[]},
+    {type:'folder', name:'Languages', open:false, id:'lang', children:[]}
+  ]
+};
+
+let selected = null;
+let idCounter = 1000;
+let previewCollapsed = false;
+let createContentMode = false;
+let createTargetFolderId = 'defs';
+let clipboard = null;
+let menuEl = null;
+let currentFileNode = null;
+let formMode = false;
+let formModePreferred = true;
+let currentXmlDoc = null;
+let depHighlightIds = new Set();
+const nodeLabelMap = new Map(); // nodeId → label element for inline rename
+
+// ── Templates ──────────────────────────────────────────────────────────────────
+const TEMPLATES = {
+  ThingDef: ['Gladius (Melee Sharp)','Ranged Weapon (Revolver)','Apparel (Flak Vest)','Apparel (Clothing)','Apparel (Hat)','Building (Drug Lab)','Building (Basic)'],
+  RecipeDef: ['Stone Blocks Recipe','Smelt Metal from Slag'],
+  ResearchProjectDef: ['Stonecutting Research'],
+  TraitDef: ['Nudist Trait','Bloodlust Trait'],
+  ThoughtDef: ['Ate Fine Meal (Memory)','Ate Raw Food (Memory)'],
+  HediffDef: ['Bionic Arm (Implant)'],
+  PawnKindDef: ['Colonist','Drifter (Raider)']
+};
+
+const TEMPLATE_INFO = {
+  'Gladius (Melee Sharp)': 'Core: MeleeWeapon_Gladius | Parent: BaseMeleeWeapon_Sharp_Quality | Smithing bench | Crafting 3',
+  'Ranged Weapon (Revolver)': 'Core: Gun_Revolver | Parent: BaseHumanMakeableGun | Generates gun + bullet ThingDef | Crafting 3',
+  'Apparel (Flak Vest)': 'Core: Apparel_FlakVest | Industrial armor | FlakArmor research | Crafting 4 | Fabrication bench',
+  'Apparel (Clothing)': 'Parent: ApparelMakeableBase | Tailoring bench | Fabric/leather | Tailoring research',
+  'Apparel (Hat)': 'Parent: HatMakeableBase | Tailoring bench | Headgear | ComplexClothing research',
+  'Building (Drug Lab)': 'Core: DrugLab | thingClass: Building_WorkTable | DrugProduction research | Construction 4',
+  'Building (Basic)': 'Parent: BuildingBase | Simple placeable structure',
+  'Stone Blocks Recipe': 'Core: Make_StoneBlocksAny | StoneCutter table | No skill req | Outputs stone blocks',
+  'Smelt Metal from Slag': 'Core: ExtractMetalFromSlag | Electric/Fueled Smelter | Outputs Steel 15',
+  'Stonecutting Research': 'Core: Stonecutting | techLevel: Medieval | baseCost 300 | researchViewX 0.00 Y 1.40',
+  'Nudist Trait': 'Core: Nudist | commonality 0.7 | One degree, no stat offsets',
+  'Bloodlust Trait': 'Core: Bloodlust | commonality 0.8 | socialFightChanceFactor 4 | requiredWorkTags Violent',
+  'Ate Fine Meal (Memory)': 'Core: AteFineMeal | Thought_Memory | durationDays 1 | baseMoodEffect +5',
+  'Ate Raw Food (Memory)': 'Core: AteRawFood | Thought_FoodEaten | durationDays 1 | baseMoodEffect -7',
+  'Bionic Arm (Implant)': 'Core: BionicArm HediffDef + ThingDef + InstallBionicArm RecipeDef | partEfficiency 1.25',
+  'Colonist': 'Core: Colonist PawnKindDef | PlayerColony faction | IndustrialBasic apparel | addiction 6%',
+  'Drifter (Raider)': 'Core: Drifter PawnKindDef | Pirate faction | combatPower 35 | poor gear quality'
+};
+
+function xmlTemplate(tpl, def, label) {
+  const t = {
+    'Gladius (Melee Sharp)': `<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <ThingDef ParentName="BaseMeleeWeapon_Sharp_Quality">
+    <defName>${def}</defName>
+    <label>${label}</label>
+    <description>A short sword of ancient design. Good for stabbing or slashing. It's light and nimble, which sometimes lets it beat bigger, heavier weapons.</description>
+    <possessionCount>1</possessionCount>
+    <graphicData>
+      <texPath>Things/Item/Equipment/WeaponMelee/Gladius</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+    </graphicData>
+    <uiIconScale>1.2</uiIconScale>
+    <techLevel>Medieval</techLevel>
+    <costStuffCount>50</costStuffCount>
+    <stuffCategories>
+      <li>Metallic</li>
+      <li>Woody</li>
+    </stuffCategories>
+    <statBases>
+      <WorkToMake>12000</WorkToMake>
+      <Mass>0.85</Mass>
+    </statBases>
+    <equippedAngleOffset>-65</equippedAngleOffset>
+    <weaponTags>
+      <li>MedievalMeleeDecent</li>
+    </weaponTags>
+    <recipeMaker>
+      <researchPrerequisite>Smithing</researchPrerequisite>
+      <skillRequirements>
+        <Crafting>3</Crafting>
+      </skillRequirements>
+      <displayPriority>410</displayPriority>
+    </recipeMaker>
+    <tools>
+      <li>
+        <label>handle</label>
+        <capacities>
+          <li>Blunt</li>
+        </capacities>
+        <power>9</power>
+        <cooldownTime>2</cooldownTime>
+      </li>
+      <li>
+        <label>point</label>
+        <capacities>
+          <li>Stab</li>
+        </capacities>
+        <power>16</power>
+        <cooldownTime>2</cooldownTime>
+      </li>
+      <li>
+        <label>edge</label>
+        <capacities>
+          <li>Cut</li>
+        </capacities>
+        <power>16</power>
+        <cooldownTime>2</cooldownTime>
+      </li>
+    </tools>
+  </ThingDef>
+</Defs>`,
+
+    'Ranged Weapon (Revolver)': `<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <ThingDef ParentName="BaseBullet">
+    <defName>Bullet_${def}</defName>
+    <label>${label} bullet</label>
+    <graphicData>
+      <texPath>Things/Projectile/Bullet_Small</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+    </graphicData>
+    <projectile>
+      <damageDef>Bullet</damageDef>
+      <damageAmountBase>12</damageAmountBase>
+      <stoppingPower>1</stoppingPower>
+      <speed>55</speed>
+    </projectile>
+  </ThingDef>
+
+  <ThingDef ParentName="BaseHumanMakeableGun">
+    <defName>${def}</defName>
+    <label>${label}</label>
+    <description>An ancient pattern double-action revolver. It's not very powerful, but has a decent range for a pistol and is quick on the draw.</description>
+    <possessionCount>1</possessionCount>
+    <graphicData>
+      <texPath>Things/Item/Equipment/WeaponRanged/Revolver</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+    </graphicData>
+    <uiIconScale>1.4</uiIconScale>
+    <soundInteract>Interact_Revolver</soundInteract>
+    <statBases>
+      <WorkToMake>4000</WorkToMake>
+      <Mass>1.4</Mass>
+      <AccuracyTouch>0.80</AccuracyTouch>
+      <AccuracyShort>0.75</AccuracyShort>
+      <AccuracyMedium>0.55</AccuracyMedium>
+      <AccuracyLong>0.40</AccuracyLong>
+      <RangedWeapon_Cooldown>1.6</RangedWeapon_Cooldown>
+    </statBases>
+    <weaponTags>
+      <li>SimpleGun</li>
+    </weaponTags>
+    <weaponClasses>
+      <li>RangedLight</li>
+    </weaponClasses>
+    <costList>
+      <Steel>30</Steel>
+      <ComponentIndustrial>2</ComponentIndustrial>
+    </costList>
+    <recipeMaker>
+      <skillRequirements>
+        <Crafting>3</Crafting>
+      </skillRequirements>
+      <displayPriority>400</displayPriority>
+    </recipeMaker>
+    <verbs>
+      <li>
+        <verbClass>Verb_Shoot</verbClass>
+        <hasStandardCommand>true</hasStandardCommand>
+        <defaultProjectile>Bullet_${def}</defaultProjectile>
+        <warmupTime>0.3</warmupTime>
+        <range>25.9</range>
+        <soundCast>Shot_Revolver</soundCast>
+        <soundCastTail>GunTail_Light</soundCastTail>
+        <muzzleFlashScale>9</muzzleFlashScale>
+      </li>
+    </verbs>
+    <tools>
+      <li>
+        <label>grip</label>
+        <capacities>
+          <li>Blunt</li>
+        </capacities>
+        <power>9</power>
+        <cooldownTime>2</cooldownTime>
+      </li>
+      <li>
+        <label>barrel</label>
+        <capacities>
+          <li>Blunt</li>
+        </capacities>
+        <power>9</power>
+        <cooldownTime>2</cooldownTime>
+      </li>
+    </tools>
+  </ThingDef>
+</Defs>`,
+
+    'Apparel (Flak Vest)': `<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <ThingDef ParentName="ArmorMachineableBase">
+    <defName>${def}</defName>
+    <label>${label}</label>
+    <description>A vest with armor plates inserted on the chest and back. While quite effective at deflecting gunshots and stabbing attacks against the chest, it does nothing to protect the limbs.</description>
+    <techLevel>Industrial</techLevel>
+    <recipeMaker>
+      <researchPrerequisite>FlakArmor</researchPrerequisite>
+      <unfinishedThingDef>UnfinishedTechArmor</unfinishedThingDef>
+      <skillRequirements>
+        <Crafting>4</Crafting>
+      </skillRequirements>
+      <displayPriority>220</displayPriority>
+    </recipeMaker>
+    <graphicData>
+      <texPath>Things/Pawn/Humanlike/Apparel/FlakVest/FlakVest</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>0.90</drawSize>
+    </graphicData>
+    <statBases>
+      <WorkToMake>9000</WorkToMake>
+      <MaxHitPoints>200</MaxHitPoints>
+      <Mass>4</Mass>
+      <Flammability>0.6</Flammability>
+      <ArmorRating_Sharp>1.00</ArmorRating_Sharp>
+      <ArmorRating_Blunt>0.36</ArmorRating_Blunt>
+      <ArmorRating_Heat>0.27</ArmorRating_Heat>
+      <Insulation_Cold>1</Insulation_Cold>
+      <EquipDelay>5</EquipDelay>
+    </statBases>
+    <equippedStatOffsets>
+      <MoveSpeed>-0.12</MoveSpeed>
+    </equippedStatOffsets>
+    <thingCategories>
+      <li>ApparelArmor</li>
+    </thingCategories>
+    <costList>
+      <Cloth>30</Cloth>
+      <Steel>60</Steel>
+      <ComponentIndustrial>1</ComponentIndustrial>
+    </costList>
+    <apparel>
+      <bodyPartGroups>
+        <li>Torso</li>
+        <li>Neck</li>
+      </bodyPartGroups>
+      <wornGraphicPath>Things/Pawn/Humanlike/Apparel/FlakVest/FlakVest</wornGraphicPath>
+      <layers>
+        <li>Middle</li>
+      </layers>
+      <tags>
+        <li>IndustrialMilitaryBasic</li>
+      </tags>
+      <defaultOutfitTags>
+        <li>Soldier</li>
+      </defaultOutfitTags>
+    </apparel>
+  </ThingDef>
+</Defs>`,
+
+    'Apparel (Clothing)': `<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <ThingDef ParentName="ApparelMakeableBase">
+    <defName>${def}</defName>
+    <label>${label}</label>
+    <description>A piece of clothing.</description>
+    <graphicData>
+      <texPath>Things/Pawn/Humanlike/Apparel/${def}/${def}</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+    </graphicData>
+    <costStuffCount>60</costStuffCount>
+    <stuffCategories>
+      <li>Fabric</li>
+      <li>Leathery</li>
+    </stuffCategories>
+    <statBases>
+      <WorkToMake>3000</WorkToMake>
+      <Mass>0.3</Mass>
+      <StuffEffectMultiplierArmor>0.25</StuffEffectMultiplierArmor>
+      <StuffEffectMultiplierInsulation_Cold>0.5</StuffEffectMultiplierInsulation_Cold>
+      <StuffEffectMultiplierInsulation_Heat>0.5</StuffEffectMultiplierInsulation_Heat>
+    </statBases>
+    <apparel>
+      <bodyPartGroups>
+        <li>Torso</li>
+      </bodyPartGroups>
+      <wornGraphicPath>Things/Pawn/Humanlike/Apparel/${def}/${def}</wornGraphicPath>
+      <layers>
+        <li>OnSkin</li>
+      </layers>
+    </apparel>
+    <recipeMaker>
+      <researchPrerequisite>Tailoring</researchPrerequisite>
+      <skillRequirements>
+        <Crafting>3</Crafting>
+      </skillRequirements>
+    </recipeMaker>
+  </ThingDef>
+</Defs>`,
+
+    'Apparel (Hat)': `<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <ThingDef ParentName="HatMakeableBase">
+    <defName>${def}</defName>
+    <label>${label}</label>
+    <description>A hat.</description>
+    <graphicData>
+      <texPath>Things/Pawn/Humanlike/Apparel/${def}/${def}</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>(0.9, 0.9)</drawSize>
+    </graphicData>
+    <costStuffCount>25</costStuffCount>
+    <stuffCategories>
+      <li>Fabric</li>
+      <li>Leathery</li>
+    </stuffCategories>
+    <statBases>
+      <MaxHitPoints>80</MaxHitPoints>
+      <WorkToMake>1800</WorkToMake>
+      <Mass>0.14</Mass>
+      <StuffEffectMultiplierArmor>0.2</StuffEffectMultiplierArmor>
+      <StuffEffectMultiplierInsulation_Cold>0.10</StuffEffectMultiplierInsulation_Cold>
+      <StuffEffectMultiplierInsulation_Heat>0.50</StuffEffectMultiplierInsulation_Heat>
+    </statBases>
+    <apparel>
+      <bodyPartGroups>
+        <li>UpperHead</li>
+      </bodyPartGroups>
+      <wornGraphicPath>Things/Pawn/Humanlike/Apparel/${def}/${def}</wornGraphicPath>
+      <layers>
+        <li>Overhead</li>
+      </layers>
+    </apparel>
+    <recipeMaker>
+      <researchPrerequisite>ComplexClothing</researchPrerequisite>
+      <skillRequirements>
+        <Crafting>3</Crafting>
+      </skillRequirements>
+    </recipeMaker>
+  </ThingDef>
+</Defs>`,
+
+    'Building (Drug Lab)': `<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <ThingDef ParentName="BuildingBase">
+    <defName>${def}</defName>
+    <label>${label}</label>
+    <description>A work bench equipped with containers, heaters, and measurement devices for producing various drugs.</description>
+    <thingClass>Building_WorkTable</thingClass>
+    <graphicData>
+      <texPath>Things/Building/Production/TableDrugLab</texPath>
+      <graphicClass>Graphic_Multi</graphicClass>
+      <shaderType>CutoutComplex</shaderType>
+      <drawSize>(3.5,1.5)</drawSize>
+    </graphicData>
+    <castEdgeShadows>true</castEdgeShadows>
+    <staticSunShadowHeight>0.20</staticSunShadowHeight>
+    <costStuffCount>50</costStuffCount>
+    <stuffCategories>
+      <li>Metallic</li>
+      <li>Woody</li>
+    </stuffCategories>
+    <costList>
+      <Steel>75</Steel>
+      <ComponentIndustrial>6</ComponentIndustrial>
+    </costList>
+    <altitudeLayer>Building</altitudeLayer>
+    <fillPercent>0.5</fillPercent>
+    <useHitPoints>True</useHitPoints>
+    <statBases>
+      <WorkToBuild>3500</WorkToBuild>
+      <MaxHitPoints>120</MaxHitPoints>
+      <Flammability>1.0</Flammability>
+    </statBases>
+    <size>(3,1)</size>
+    <designationCategory>Production</designationCategory>
+    <passability>PassThroughOnly</passability>
+    <pathCost>50</pathCost>
+    <hasInteractionCell>True</hasInteractionCell>
+    <interactionCellOffset>(0,0,-1)</interactionCellOffset>
+    <surfaceType>Item</surfaceType>
+    <constructionSkillPrerequisite>4</constructionSkillPrerequisite>
+    <inspectorTabs>
+      <li>ITab_Bills</li>
+    </inspectorTabs>
+    <building>
+      <spawnedConceptLearnOpportunity>BillsTab</spawnedConceptLearnOpportunity>
+      <paintable>true</paintable>
+      <workTableRoomRole>Laboratory</workTableRoomRole>
+      <workTableNotInRoomRoleFactor>0.8</workTableNotInRoomRoleFactor>
+    </building>
+    <comps>
+      <li Class="CompProperties_AffectedByFacilities">
+        <linkableFacilities>
+          <li>ToolCabinet</li>
+        </linkableFacilities>
+      </li>
+    </comps>
+    <researchPrerequisites>
+      <li>DrugProduction</li>
+    </researchPrerequisites>
+  </ThingDef>
+</Defs>`,
+
+    'Building (Basic)': `<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <ThingDef ParentName="BuildingBase">
+    <defName>${def}</defName>
+    <label>${label}</label>
+    <description>A building.</description>
+    <thingClass>Building</thingClass>
+    <graphicData>
+      <texPath>Things/Building/${def}</texPath>
+      <graphicClass>Graphic_Single</graphicClass>
+      <drawSize>(2,2)</drawSize>
+    </graphicData>
+    <statBases>
+      <MaxHitPoints>300</MaxHitPoints>
+      <WorkToBuild>2000</WorkToBuild>
+      <Flammability>0</Flammability>
+    </statBases>
+    <size>(2,2)</size>
+    <altitudeLayer>Building</altitudeLayer>
+    <passability>PassThroughOnly</passability>
+    <pathCost>50</pathCost>
+    <designationCategory>Misc</designationCategory>
+    <costList>
+      <Steel>50</Steel>
+    </costList>
+    <constructionSkillPrerequisite>3</constructionSkillPrerequisite>
+  </ThingDef>
+</Defs>`,
+
+    'Stone Blocks Recipe': `<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <RecipeDef>
+    <defName>${def}</defName>
+    <label>${label}</label>
+    <description>Cut rock chunks into usable stone blocks.</description>
+    <jobString>Cutting stone blocks from chunk.</jobString>
+    <workAmount>1600</workAmount>
+    <workSpeedStat>GeneralLaborSpeed</workSpeedStat>
+    <effectWorking>CutStone</effectWorking>
+    <soundWorking>Recipe_MakeStoneBlocks</soundWorking>
+    <targetCountAdjustment>20</targetCountAdjustment>
+    <workSkill>Crafting</workSkill>
+    <workSkillLearnFactor>0</workSkillLearnFactor>
+    <recipeUsers>
+      <li>TableStonecutter</li>
+    </recipeUsers>
+    <ingredients>
+      <li>
+        <filter>
+          <categories>
+            <li>StoneChunks</li>
+          </categories>
+        </filter>
+        <count>1</count>
+      </li>
+    </ingredients>
+    <fixedIngredientFilter>
+      <categories>
+        <li>StoneChunks</li>
+      </categories>
+    </fixedIngredientFilter>
+    <specialProducts>
+      <li>StoneBlocks</li>
+    </specialProducts>
+  </RecipeDef>
+</Defs>`,
+
+    'Smelt Metal from Slag': `<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <RecipeDef>
+    <defName>${def}</defName>
+    <label>${label}</label>
+    <description>Use heat and strong electromagnets to extract useful metal from slag chunks.</description>
+    <jobString>Smelting metal from slag.</jobString>
+    <workAmount>400</workAmount>
+    <workSpeedStat>SmeltingSpeed</workSpeedStat>
+    <effectWorking>Smelt</effectWorking>
+    <soundWorking>Recipe_Smelt</soundWorking>
+    <ingredients>
+      <li>
+        <filter>
+          <thingDefs>
+            <li>ChunkSlagSteel</li>
+            <li>ChunkMechanoidSlag</li>
+          </thingDefs>
+        </filter>
+        <count>1</count>
+      </li>
+    </ingredients>
+    <products>
+      <Steel>15</Steel>
+    </products>
+    <fixedIngredientFilter>
+      <thingDefs>
+        <li>ChunkSlagSteel</li>
+        <li>ChunkMechanoidSlag</li>
+      </thingDefs>
+    </fixedIngredientFilter>
+  </RecipeDef>
+</Defs>`,
+
+    'Stonecutting Research': `<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <ResearchProjectDef>
+    <defName>${def}</defName>
+    <label>${label}</label>
+    <description>Cut rock chunks into stone blocks for use in construction. Build beautiful stone tile floors or ugly concrete walkways.</description>
+    <baseCost>300</baseCost>
+    <techLevel>Medieval</techLevel>
+    <researchViewX>0.00</researchViewX>
+    <researchViewY>1.40</researchViewY>
+  </ResearchProjectDef>
+</Defs>`,
+
+    'Nudist Trait': `<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <TraitDef>
+    <defName>${def}</defName>
+    <commonality>0.7</commonality>
+    <degreeDatas>
+      <li>
+        <label>${label}</label>
+        <description>{PAWN_nameDef} enjoys the feeling of freedom that comes from being nude. {PAWN_pronoun} can handle clothing, but will be happier without it.</description>
+      </li>
+    </degreeDatas>
+  </TraitDef>
+</Defs>`,
+
+    'Bloodlust Trait': `<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <TraitDef>
+    <defName>${def}</defName>
+    <commonality>0.8</commonality>
+    <degreeDatas>
+      <li>
+        <label>${label}</label>
+        <description>{PAWN_nameDef} gets a rush from hurting people, and never minds the sight of blood or death. {PAWN_pronoun} is four times as likely to start a social fight as others.</description>
+        <socialFightChanceFactor>4</socialFightChanceFactor>
+        <allowedMeditationFocusTypes><li>Morbid</li></allowedMeditationFocusTypes>
+        <possessions>
+          <MeleeWeapon_LongSword />
+        </possessions>
+      </li>
+    </degreeDatas>
+    <requiredWorkTags>
+      <li>Violent</li>
+    </requiredWorkTags>
+  </TraitDef>
+</Defs>`,
+
+    'Ate Fine Meal (Memory)': `<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <ThoughtDef>
+    <defName>${def}</defName>
+    <durationDays>1</durationDays>
+    <stages>
+      <li>
+        <label>${label}</label>
+        <description>I ate a really tasty fine meal. Yum!</description>
+        <baseMoodEffect>5</baseMoodEffect>
+      </li>
+    </stages>
+  </ThoughtDef>
+</Defs>`,
+
+    'Ate Raw Food (Memory)': `<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <ThoughtDef>
+    <defName>${def}</defName>
+    <thoughtClass>Thought_FoodEaten</thoughtClass>
+    <showBubble>true</showBubble>
+    <icon>Things/Mote/ThoughtSymbol/Food</icon>
+    <durationDays>1</durationDays>
+    <stages>
+      <li>
+        <label>${label}</label>
+        <description>I had to eat raw food. We should be cooking that kind of food before eating it. We're not animals.</description>
+        <baseMoodEffect>-7</baseMoodEffect>
+      </li>
+    </stages>
+  </ThoughtDef>
+</Defs>`,
+
+    'Bionic Arm (Implant)': `<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <!-- The hediff applied when the implant is installed -->
+  <HediffDef ParentName="AddedBodyPartBase">
+    <defName>${def}</defName>
+    <label>${label}</label>
+    <labelNoun>a ${label}</labelNoun>
+    <description>An installed ${label}. Silenced mini-servos give great strength, while the biogel nerve-link gives exquisite control. A lattice-dust healing system allows it to recover from damage. It is better than a biological arm in almost every way.</description>
+    <descriptionHyperlinks><ThingDef>${def}_Item</ThingDef></descriptionHyperlinks>
+    <comps>
+      <li Class="HediffCompProperties_VerbGiver">
+        <tools>
+          <li>
+            <label>fist</label>
+            <capacities>
+              <li>Blunt</li>
+            </capacities>
+            <power>12</power>
+            <cooldownTime>2</cooldownTime>
+            <soundMeleeHit>MeleeHit_BionicPunch</soundMeleeHit>
+            <soundMeleeMiss>MeleeMiss_BionicPunch</soundMeleeMiss>
+          </li>
+        </tools>
+      </li>
+    </comps>
+    <spawnThingOnRemoved>${def}_Item</spawnThingOnRemoved>
+    <addedPartProps>
+      <solid>true</solid>
+      <partEfficiency>1.25</partEfficiency>
+      <betterThanNatural>true</betterThanNatural>
+    </addedPartProps>
+  </HediffDef>
+
+  <!-- The craftable item -->
+  <ThingDef ParentName="BodyPartBionicBase">
+    <defName>${def}_Item</defName>
+    <label>${label}</label>
+    <description>An advanced artificial arm. Silenced mini-servos give great strength, while the biogel nerve-link gives exquisite control. A lattice-dust healing system allows it to recover from damage.</description>
+    <descriptionHyperlinks><RecipeDef>Install_${def}</RecipeDef></descriptionHyperlinks>
+    <costList>
+      <Plasteel>15</Plasteel>
+      <ComponentSpacer>4</ComponentSpacer>
+    </costList>
+    <statBases>
+      <Mass>5</Mass>
+    </statBases>
+  </ThingDef>
+
+  <!-- The surgery recipe -->
+  <RecipeDef ParentName="SurgeryInstallBodyPartArtificialBase">
+    <defName>Install_${def}</defName>
+    <label>install ${label}</label>
+    <description>Install a ${label}.</description>
+    <descriptionHyperlinks>
+      <ThingDef>${def}_Item</ThingDef>
+      <HediffDef>${def}</HediffDef>
+    </descriptionHyperlinks>
+    <jobString>Installing ${label}.</jobString>
+    <ingredients>
+      <li>
+        <filter>
+          <thingDefs>
+            <li>${def}_Item</li>
+          </thingDefs>
+        </filter>
+        <count>1</count>
+      </li>
+    </ingredients>
+    <appliedOnFixedBodyParts>
+      <li>Shoulder</li>
+    </appliedOnFixedBodyParts>
+    <addsHediff>${def}</addsHediff>
+  </RecipeDef>
+</Defs>`,
+
+    'Colonist': `<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <PawnKindDef ParentName="BasePlayerPawnKind">
+    <defName>${def}</defName>
+    <label>${label}</label>
+    <defaultFactionDef>PlayerColony</defaultFactionDef>
+    <chemicalAddictionChance>0.06</chemicalAddictionChance>
+    <apparelTags>
+      <li>IndustrialBasic</li>
+    </apparelTags>
+    <apparelAllowHeadgearChance>0</apparelAllowHeadgearChance>
+    <apparelMoney>350~600</apparelMoney>
+    <backstoryCryptosleepCommonality>1</backstoryCryptosleepCommonality>
+    <techHediffsChance>0.03</techHediffsChance>
+    <techHediffsMoney>50~800</techHediffsMoney>
+    <techHediffsTags>
+      <li>Poor</li>
+      <li>Simple</li>
+      <li>ImplantEmpireCommon</li>
+    </techHediffsTags>
+    <techHediffsDisallowTags>
+      <li>PainCauser</li>
+    </techHediffsDisallowTags>
+    <initialResistanceRange>13~21</initialResistanceRange>
+  </PawnKindDef>
+</Defs>`,
+
+    'Drifter (Raider)': `<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <PawnKindDef ParentName="PirateBase">
+    <defName>${def}</defName>
+    <label>${label}</label>
+    <combatPower>35</combatPower>
+    <invNutrition>0</invNutrition>
+    <gearHealthRange>0.2~0.6</gearHealthRange>
+    <itemQuality>Poor</itemQuality>
+    <apparelMoney>90~280</apparelMoney>
+    <apparelAllowHeadgearChance>0.2</apparelAllowHeadgearChance>
+    <apparelTags>
+      <li>IndustrialBasic</li>
+    </apparelTags>
+    <weaponMoney>60~200</weaponMoney>
+    <weaponTags>
+      <li>MedievalMeleeBasic</li>
+      <li>NeolithicMeleeBasic</li>
+    </weaponTags>
+    <techHediffsMoney>50~50</techHediffsMoney>
+    <techHediffsTags>
+      <li>Poor</li>
+    </techHediffsTags>
+    <techHediffsChance>0.15</techHediffsChance>
+  </PawnKindDef>
+</Defs>`
+  };
+  return t[tpl] || '';
+}
+
+function recipeCompanionXml(def, label) {
+  return `<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <RecipeDef>
+    <defName>Make_${def}</defName>
+    <label>make ${label}</label>
+    <description>Craft a ${label}.</description>
+    <jobString>Crafting ${label}.</jobString>
+    <workAmount>10000</workAmount>
+    <workSpeedStat>GeneralLaborSpeed</workSpeedStat>
+    <workSkill>Crafting</workSkill>
+    <effectWorking>Smith</effectWorking>
+    <soundWorking>Recipe_Smith</soundWorking>
+    <products>
+      <${def}>1</${def}>
+    </products>
+    <ingredients>
+      <li>
+        <filter>
+          <categories>
+            <li>Metallic</li>
+          </categories>
+        </filter>
+        <count>50</count>
+      </li>
+    </ingredients>
+    <recipeUsers>
+      <li>ElectricSmithy</li>
+      <li>FueledSmithy</li>
+    </recipeUsers>
+    <skillRequirements>
+      <Crafting>3</Crafting>
+    </skillRequirements>
+  </RecipeDef>
+</Defs>`;
+}
+
+function researchCompanionXml(def, label) {
+  return `<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+  <ResearchProjectDef>
+    <defName>Research_${def}</defName>
+    <label>${label} research</label>
+    <description>Research to unlock ${label}.</description>
+    <baseCost>1000</baseCost>
+    <techLevel>Industrial</techLevel>
+    <researchViewX>5.00</researchViewX>
+    <researchViewY>0.00</researchViewY>
+  </ResearchProjectDef>
+</Defs>`;
+}
+
+function localizationXml(def, label) {
+  return `<?xml version="1.0" encoding="utf-8" ?>
+<LanguageData>
+  <${def}.label>${label}</${def}.label>
+  <${def}.description>Description of ${label}.</${def}.description>
+</LanguageData>`;
+}
+
+function texturePlaceholder(def) {
+  return `Place your ${def}.png texture here.\nRecommended size: 64x64 pixels (power of two).`;
+}
+
+// ── Tree ──────────────────────────────────────────────────────────────────────
+function render() {
+  nodeLabelMap.clear();
+  const tree = document.getElementById('tree');
+  tree.innerHTML = '';
+  tree.appendChild(renderNode(data, 0));
+}
+
+
+function startInlineRename(labelEl, node) {
+  const prev = node.name;
+  const inp = document.createElement('input');
+  inp.value = node.name;
+  inp.style.cssText = 'flex:1;min-width:0;background:#1e2535;border:1px solid #4a80d4;color:#cfd6e4;border-radius:3px;padding:1px 5px;font-size:12px;font-family:inherit;outline:none;';
+  labelEl.replaceWith(inp);
+  inp.focus(); inp.select();
+  function commit() {
+    const v = inp.value.trim();
+    if (v && v !== prev) {
+      const parent = findParentOf(node.id, data, null);
+      node.name = parent ? uniqueNameExcluding(parent, v, node.id) : v;
+    } else {
+      node.name = prev;
+    }
+    inp.replaceWith(labelEl);
+    labelEl.textContent = node.name;
+    if (currentFileNode && currentFileNode.id === node.id)
+      document.getElementById('fileNameLabel').textContent = node.name;
+    render();
+  }
+  inp.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); commit(); }
+    if (e.key === 'Escape') { node.name = prev; inp.replaceWith(labelEl); }
+  });
+  inp.addEventListener('blur', commit);
+}
+
+function renderNode(node, depth) {
+  const wrap = document.createElement('div');
+  const row = document.createElement('div');
+  row.style.cssText = `display:flex;align-items:center;gap:6px;padding:5px 6px;border-radius:6px;cursor:pointer;padding-left:${depth*16+6}px;user-select:none;`;
+  row.draggable = node.id !== 'root';
+  row.dataset.nodeId = node.id;
+
+  const isTarget = createContentMode && node.id === createTargetFolderId;
+  const isDep = depHighlightIds.has(node.id);
+  if (selected === node.id) row.style.background = '#2a3a5e';
+  else if (isDep) row.style.cssText += ';background:rgba(74,128,212,0.12);border-left:2px solid #4a80d4;padding-left:' + (depth*16+4) + 'px;';
+  row.onmouseenter = () => { if (selected !== node.id) row.style.background = isDep ? 'rgba(74,128,212,0.2)' : '#1e2535'; };
+  row.onmouseleave = () => { if (selected !== node.id) row.style.background = isDep ? 'rgba(74,128,212,0.12)' : 'transparent'; };
+
+  row.ondragstart = (e) => { e.dataTransfer.setData('text/plain', node.id); e.stopPropagation(); };
+  if (node.type === 'folder') {
+    row.ondragover = (e) => { e.preventDefault(); row.style.background = '#46557a'; };
+    row.ondragleave = () => { row.style.background = selected === node.id ? '#3a4763' : 'transparent'; };
+    row.ondrop = (e) => {
+      e.preventDefault();
+      const draggedId = e.dataTransfer.getData('text/plain');
+      moveNode(draggedId, node.id);
+      row.style.background = selected === node.id ? '#3a4763' : 'transparent';
+    };
+  }
+
+  if (node.type === 'folder') {
+    const chev = document.createElement('span');
+    chev.textContent = node.open ? '▾' : '▸';
+    chev.style.cssText = 'font-size:11px;color:#7e879c;width:14px;flex-shrink:0;display:inline-block;text-align:center;';
+    const icon = document.createElement('span');
+    icon.textContent = '📁';
+    icon.style.cssText = 'font-size:13px;flex-shrink:0;';
+    const label = document.createElement('span');
+    label.style.cssText = 'flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+    if (isTarget) {
+      label.innerHTML = `<span>${node.name}</span> <span style="color:#4a80d4;font-size:10px;font-weight:600;">[TARGET]</span>`;
+    } else {
+      label.textContent = node.name;
+    }
+    nodeLabelMap.set(node.id, label);
+    row.appendChild(chev); row.appendChild(icon); row.appendChild(label);
+    row.onclick = () => {
+      if (createContentMode) {
+        createTargetFolderId = node.id;
+        document.getElementById('ccTargetName').textContent = node.name;
+        document.getElementById('ccFolderHint').style.display = 'none';
+        refreshCC();
+      }
+      node.open = !node.open;
+      selected = node.id;
+      render();
+    };
+  } else {
+    const spacer = document.createElement('span');
+    spacer.style.cssText = 'width:13px;display:inline-block;flex-shrink:0;';
+    const icon = document.createElement('span');
+    icon.textContent = node.kind === 'image' ? '🖼' : '📄';
+    icon.style.cssText = 'font-size:12px;flex-shrink:0;';
+    const label = document.createElement('span');
+    label.className = 'tree-label';
+    label.textContent = node.name;
+    label.style.cssText = 'flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;' + (isDep ? 'color:#7aabf0;' : '');
+    nodeLabelMap.set(node.id, label);
+    row.appendChild(spacer); row.appendChild(icon); row.appendChild(label);
+    row.onclick = () => {
+      if (createContentMode) return;
+      selected = node.id;
+      openFile(node);
+      render();
+    };
+  }
+
+  row.oncontextmenu = (e) => {
+    e.preventDefault();
+    selected = node.id;
+    render();
+    showContextMenu(e.pageX, e.pageY, node);
+  };
+
+  wrap.appendChild(row);
+  if (node.type === 'folder' && node.open) {
+    node.children.forEach(c => wrap.appendChild(renderNode(c, depth + 1)));
+  }
+  return wrap;
+}
+
+function isImage(name) { return /\.(png|jpe?g|gif|webp|bmp)$/i.test(name); }
+function isXml(name) { return /\.xml$/i.test(name); }
+
+// ── Preview ────────────────────────────────────────────────────────────────────
+function setPreview(mode, node) {
+  const pre = document.getElementById('previewBody');
+  const imgWrap = document.getElementById('imagePreviewWrap');
+  const empty = document.getElementById('previewEmpty');
+  const lbl = document.getElementById('previewLabel');
+
+  pre.style.display = 'none';
+  imgWrap.style.display = 'none';
+  empty.style.display = 'none';
+  pre.contentEditable = 'false';
+  pre.oninput = null;
+
+  if (previewCollapsed) { lbl.textContent = node ? 'Preview — ' + node.name : 'Preview'; return; }
+
+  if (mode === 'text') {
+    lbl.textContent = 'Preview — ' + node.name;
+    pre.innerText = node.content || '';
+    pre.contentEditable = 'true';
+    pre.oninput = () => {
+      node.content = pre.innerText;
+      const ed = document.getElementById('fileEditor');
+      if (ed.dataset.nodeId === node.id) ed.value = node.content;
+    };
+    pre.style.display = 'block';
+  } else if (mode === 'image') {
+    lbl.textContent = 'Preview — ' + node.name;
+    document.getElementById('imagePreview').src = node.content;
+    imgWrap.style.display = 'flex';
+  } else {
+    lbl.textContent = 'Preview';
+    empty.style.display = 'block';
+  }
+}
+
+document.getElementById('previewHeader').onclick = () => {
+  previewCollapsed = !previewCollapsed;
+  document.getElementById('previewChevron').textContent = previewCollapsed ? '▸' : '▾';
+  const node = selected ? findNode(data, selected) : null;
+  if (!previewCollapsed && node && node.type === 'file') {
+    setPreview(node.kind === 'image' ? 'image' : 'text', node);
+  } else {
+    document.getElementById('previewBody').style.display = 'none';
+    document.getElementById('imagePreviewWrap').style.display = 'none';
+    document.getElementById('previewEmpty').style.display = 'none';
+  }
+};
+
+// ── Dependency Highlighting ────────────────────────────────────────────────────
+function computeDeps(node) {
+  depHighlightIds = new Set();
+  if (!node || !isXml(node.name) || !node.content) return;
+  // Collect all text tokens that look like defNames from this file
+  const tokens = new Set();
+  const tokenRe = /[A-Za-z][A-Za-z0-9_]{2,}/g;
+  let m;
+  while ((m = tokenRe.exec(node.content)) !== null) tokens.add(m[0]);
+  // Also extract defNames defined in this file
+  const selfDns = new Set();
+  const dnRe = /<defName>([^<]+)<\/defName>/g;
+  while ((m = dnRe.exec(node.content)) !== null) selfDns.add(m[1].trim());
+  // Walk all other XML files in the tree
+  function walkNodes(nodes) {
+    for (const n of nodes) {
+      if (n.type === 'folder') { walkNodes(n.children || []); continue; }
+      if (n === node || !isXml(n.name) || !n.content) continue;
+      // Does this file define a defName referenced in our file?
+      let hit = false;
+      const oDnRe = /<defName>([^<]+)<\/defName>/g;
+      while ((m = oDnRe.exec(n.content)) !== null) {
+        if (tokens.has(m[1].trim())) { hit = true; break; }
+      }
+      // Or does this file reference a defName we define?
+      if (!hit) {
+        for (const dn of selfDns) {
+          if (n.content.includes(dn)) { hit = true; break; }
+        }
+      }
+      if (hit) depHighlightIds.add(n.id);
+    }
+  }
+  walkNodes(data.children || []);
+}
+
+// ── Open File ──────────────────────────────────────────────────────────────────
+function openFile(node) {
+  if (createContentMode) return;
+  currentFileNode = node;
+  formMode = false;
+  currentXmlDoc = null;
+  computeDeps(node);
+
+  document.getElementById('editorEmpty').style.display = 'none';
+  const ec = document.getElementById('editorContent');
+  ec.style.display = 'flex';
+  document.getElementById('fileNameLabel').textContent = node.name;
+  document.getElementById('fileTypeIcon').textContent = node.kind === 'image' ? '🖼' : '📄';
+
+  const editor = document.getElementById('fileEditor');
+  const bigImg = document.getElementById('bigImagePreviewWrap');
+  const formEl = document.getElementById('formEditor');
+  const toggleBtn = document.getElementById('toggleFormBtn');
+
+  editor.style.display = 'none';
+  bigImg.style.display = 'none';
+  formEl.style.display = 'none';
+  toggleBtn.style.display = 'none';
+  toggleBtn.classList.remove('active');
+
+  if (node.kind === 'image') {
+    document.getElementById('bigImagePreview').src = node.content;
+    bigImg.style.display = 'flex';
+    setPreview('image', node);
+  } else {
+    editor.style.display = 'block';
+    editor.value = node.content || '';
+    editor.dataset.nodeId = node.id;
+    editor.oninput = () => {
+      node.content = editor.value;
+      currentXmlDoc = null;
+      const pre = document.getElementById('previewBody');
+      if (pre.contentEditable === 'true') pre.innerText = node.content;
+    };
+    setPreview('text', node);
+    if (isXml(node.name)) {
+      toggleBtn.style.display = 'block';
+      if (formModePreferred) {
+        formMode = true;
+        toggleBtn.classList.add('active');
+        toggleBtn.textContent = '✎ Edit XML';
+        editor.style.display = 'none';
+        const formEl2 = document.getElementById('formEditor');
+        formEl2.style.display = 'block';
+        renderFormEditor(node, formEl2);
+      }
+    }
+  }
+}
+
+// ── Form Toggle ────────────────────────────────────────────────────────────────
+document.getElementById('toggleFormBtn').addEventListener('click', () => {
+  if (!currentFileNode) return;
+  formMode = !formMode;
+  formModePreferred = formMode;
+  const toggleBtn = document.getElementById('toggleFormBtn');
+  const editor = document.getElementById('fileEditor');
+  const formEl = document.getElementById('formEditor');
+
+  if (formMode) {
+    // Save textarea content to node first
+    currentFileNode.content = editor.value;
+    toggleBtn.classList.add('active');
+    toggleBtn.textContent = '✎ Edit XML';
+    editor.style.display = 'none';
+    formEl.style.display = 'block';
+    renderFormEditor(currentFileNode, formEl);
+  } else {
+    // Serialize doc back to XML if we have one
+    if (currentXmlDoc) {
+      currentFileNode.content = prettyXml(currentXmlDoc);
+    }
+    toggleBtn.classList.remove('active');
+    toggleBtn.textContent = '⬡ Visual Form';
+    formEl.style.display = 'none';
+    editor.style.display = 'block';
+    editor.value = currentFileNode.content || '';
+    currentXmlDoc = null;
+    const pre = document.getElementById('previewBody');
+    if (pre.contentEditable === 'true') pre.innerText = currentFileNode.content;
+  }
+});
+
+// ── XML Serializer ─────────────────────────────────────────────────────────────
+function prettyXml(doc) {
+  const lines = ['<?xml version="1.0" encoding="utf-8" ?>'];
+  function ser(node, indent) {
+    if (node.nodeType === 3) { const t = node.textContent.trim(); if (t) lines.push(indent + escX(t)); return; }
+    if (node.nodeType === 8) { lines.push(indent + '<!--' + node.textContent + '-->'); return; }
+    if (node.nodeType !== 1) return;
+    const tag = node.tagName;
+    const attrs = [...node.attributes].map(a => ` ${a.name}="${escA(a.value)}"`).join('');
+    const kids = [...node.childNodes].filter(c => c.nodeType === 1 || (c.nodeType === 3 && c.textContent.trim()));
+    if (!kids.length) {
+      const t = node.textContent.trim();
+      if (t) lines.push(`${indent}<${tag}${attrs}>${escX(t)}</${tag}>`);
+      else lines.push(`${indent}<${tag}${attrs} />`);
+    } else if (kids.length === 1 && kids[0].nodeType === 3) {
+      lines.push(`${indent}<${tag}${attrs}>${escX(kids[0].textContent.trim())}</${tag}>`);
+    } else {
+      lines.push(`${indent}<${tag}${attrs}>`);
+      for (const c of node.childNodes) ser(c, indent + '  ');
+      lines.push(`${indent}</${tag}>`);
+    }
+  }
+  for (const c of doc.childNodes) ser(c, '');
+  return lines.join('\n');
+}
+function escX(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escA(s) { return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;'); }
+
+// ── Form Editor ────────────────────────────────────────────────────────────────
+function renderFormEditor(node, container) {
+  container.innerHTML = '';
+  const xml = node.content || '';
+  if (!xml.trim()) {
+    container.innerHTML = '<p style="color:#5b6377;padding:20px">Empty file — switch to XML view to add content.</p>';
+    return;
+  }
+  let doc;
+  try { doc = new DOMParser().parseFromString(xml, 'application/xml'); } catch(e) {
+    container.innerHTML = '<p style="color:#c0392b;padding:12px">XML parse error.</p>'; return;
+  }
+  if (doc.querySelector('parsererror')) {
+    container.innerHTML = '<p style="color:#c0392b;padding:12px">XML parse error — fix in XML view first.</p>'; return;
+  }
+  currentXmlDoc = doc;
+
+  function upd() {
+    node.content = prettyXml(doc);
+    const pre = document.getElementById('previewBody');
+    if (pre.contentEditable === 'true') pre.innerText = node.content;
+  }
+
+  const root = doc.documentElement;
+  if (root.tagName === 'ModMetaData') { renderAboutForm(root, container, upd, doc); return; }
+  if (root.tagName === 'Defs') {
+    if (!root.children.length) { container.innerHTML = '<p style="color:#5b6377;padding:20px">No defs found.</p>'; return; }
+    for (const def of [...root.children]) renderDefSection(def, container, upd, doc);
+    return;
+  }
+  renderDefSection(root, container, upd, doc);
+}
+
+function mkSec(title, container) {
+  const sec = document.createElement('div'); sec.className = 'fe-section';
+  const hdr = document.createElement('div'); hdr.className = 'fe-section-hdr';
+  hdr.innerHTML = `<i class="ti ti-chevron-down" style="font-size:12px"></i><span>${title}</span>`;
+  const body = document.createElement('div'); body.className = 'fe-section-body';
+  hdr.addEventListener('click', () => {
+    const open = body.style.display !== 'none';
+    body.style.display = open ? 'none' : '';
+    hdr.querySelector('i').className = open ? 'ti ti-chevron-right' : 'ti ti-chevron-down';
+    hdr.querySelector('i').style.fontSize = '12px';
+  });
+  sec.appendChild(hdr); sec.appendChild(body); container.appendChild(sec);
+  return body;
+}
+
+// ── Smart Field Helpers ────────────────────────────────────────────────────────
+
+// Collect files from mod tree by folder name prefix and optional extension list
+function collectModFiles(folderName, exts) {
+  const results = []; // {name, path, node}
+  function walk(nodes, pathParts) {
+    for (const n of nodes) {
+      if (n.type === 'folder') {
+        walk(n.children || [], [...pathParts, n.name]);
+      } else {
+        const inTarget = pathParts.some(p => p.toLowerCase() === folderName.toLowerCase());
+        if (!inTarget) continue;
+        const ext = n.name.split('.').pop().toLowerCase();
+        if (exts && !exts.includes(ext)) continue;
+        // Build relative path from folderName
+        const idx = pathParts.findIndex(p => p.toLowerCase() === folderName.toLowerCase());
+        const rel = [...pathParts.slice(idx + 1), n.name].join('/');
+        const noExt = rel.replace(/\.[^.]+$/, '');
+        results.push({ name: n.name, rel, noExt, node: n });
+      }
+    }
+  }
+  walk(data.children || [], []);
+  return results;
+}
+
+// File path picker field (for texPath, soundPath etc.)
+function fePathField(labelTxt, el, body, upd, folderName, exts, { showPreview = false, previewFinder = null } = {}) {
+  const row = feRow(labelTxt, body);
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'position:relative;flex:1;display:flex;gap:4px;align-items:center;';
+
+  const inp = document.createElement('input'); inp.type = 'text'; inp.value = el.textContent.trim();
+  inp.style.flex = '1';
+  const dd = document.createElement('div'); dd.className = 'sf-path-drop';
+
+  let previewImg = null;
+  if (showPreview) {
+    previewImg = document.createElement('img');
+    previewImg.className = 'sf-tex-preview hidden';
+    previewImg.title = 'Texture preview';
+  }
+
+  const warn = document.createElement('span'); warn.className = 'sf-warn'; warn.style.display = 'none';
+
+  function updatePreview(val) {
+    if (!previewImg) return;
+    const files = collectModFiles(folderName, exts);
+    const match = files.find(f => f.noExt === val || f.rel === val);
+    if (match && match.node.content && match.node.content.startsWith('data:')) {
+      previewImg.src = match.node.content;
+      previewImg.classList.remove('hidden');
+      // Dimension warning
+      const img2 = new Image();
+      img2.onload = () => {
+        const pw2 = img2.width, ph2 = img2.height;
+        const bad = (pw2 & (pw2 - 1)) !== 0 || (ph2 & (ph2 - 1)) !== 0;
+        warn.textContent = bad ? `⚠ ${pw2}×${ph2} (not power-of-2)` : '';
+        warn.style.display = bad ? 'inline' : 'none';
+        // Auto graphic class suggestion
+        if (showPreview) {
+          const multi = files.some(f => f.noExt === val + '_south' || f.noExt === val + '_n');
+          const gcEl = el.parentElement && el.parentElement.querySelector('graphicClass');
+          if (gcEl && multi && gcEl.textContent.trim() === 'Graphic_Single') {
+            gcEl.textContent = 'Graphic_Multi';
+            upd();
+            showToast('Auto-set graphicClass → Graphic_Multi (directional textures found)');
+          }
+        }
+      };
+      img2.src = match.node.content;
+    } else {
+      previewImg.classList.add('hidden');
+      warn.style.display = 'none';
+    }
+  }
+
+  function fillPathDd(q) {
+    dd.innerHTML = '';
+    const files = collectModFiles(folderName, exts);
+    const lq = q.toLowerCase();
+    files.filter(f => !lq || f.noExt.toLowerCase().includes(lq) || f.name.toLowerCase().includes(lq))
+      .slice(0, 30)
+      .forEach(f => {
+        const it = document.createElement('div'); it.className = 'sf-path-item';
+        const main = document.createElement('div'); main.textContent = f.noExt;
+        const sub = document.createElement('div'); sub.className = 'sf-pi-sub'; sub.textContent = f.name;
+        it.appendChild(main); it.appendChild(sub);
+        it.addEventListener('mousedown', e => {
+          e.preventDefault();
+          inp.value = f.noExt; el.textContent = f.noExt; upd();
+          dd.classList.remove('open');
+          updatePreview(f.noExt);
+        });
+        dd.appendChild(it);
+      });
+    dd.classList.toggle('open', dd.children.length > 0);
+  }
+
+  inp.dataset.kind = 'path';
+  inp.addEventListener('focus', () => fillPathDd(inp.value));
+  inp.addEventListener('input', () => { el.textContent = inp.value; upd(); fillPathDd(inp.value); updatePreview(inp.value); });
+  inp.addEventListener('blur', () => setTimeout(() => dd.classList.remove('open'), 150));
+
+  const iwrap = document.createElement('div'); iwrap.style.cssText = 'position:relative;flex:1;';
+  iwrap.appendChild(inp); iwrap.appendChild(dd);
+  wrap.appendChild(iwrap);
+  if (previewImg) wrap.appendChild(previewImg);
+  wrap.appendChild(warn);
+  row.appendChild(wrap);
+  updatePreview(inp.value);
+  return row;
+}
+
+// Color picker for RimWorld color format "(r, g, b, a)" or "r,g,b,a"
+function feColorField(labelTxt, el, body, upd) {
+  const row = feRow(labelTxt, body);
+  const wrap = document.createElement('div'); wrap.className = 'sf-color-wrap';
+
+  function rimToHex(s) {
+    const parts = s.replace(/[()]/g,'').split(',').map(x => Math.round(parseFloat(x.trim()) * 255));
+    if (parts.length < 3 || parts.some(isNaN)) return '#ffffff';
+    return '#' + parts.slice(0,3).map(v => v.toString(16).padStart(2,'0')).join('');
+  }
+  function hexToRim(hex, alpha = 1) {
+    const r = parseInt(hex.slice(1,3),16)/255, g = parseInt(hex.slice(3,5),16)/255, b = parseInt(hex.slice(5,7),16)/255;
+    return `(${r.toFixed(3)}, ${g.toFixed(3)}, ${b.toFixed(3)}, ${alpha.toFixed(3)})`;
+  }
+
+  const current = el.textContent.trim();
+  const swatch = document.createElement('input'); swatch.type = 'color'; swatch.className = 'sf-color-swatch';
+  swatch.value = rimToHex(current);
+
+  const inp = document.createElement('input'); inp.type = 'text'; inp.value = current; inp.style.flex = '1';
+
+  inp.dataset.kind = 'color';
+  swatch.addEventListener('input', () => {
+    const parts = el.textContent.replace(/[()]/g,'').split(',');
+    const alpha = parts.length >= 4 ? parseFloat(parts[3]) : 1;
+    const v = hexToRim(swatch.value, alpha);
+    inp.value = v; el.textContent = v; upd();
+  });
+  inp.addEventListener('input', () => {
+    el.textContent = inp.value; upd();
+    try { swatch.value = rimToHex(inp.value); } catch(e) {}
+  });
+
+  wrap.appendChild(swatch); wrap.appendChild(inp);
+  row.appendChild(wrap);
+}
+
+// Numeric slider for bounded fields
+const SLIDER_BOUNDS = {
+  flammability:[0,1,0.01], beauty:[-10,10,0.5], fertility:[0,5,0.1], pathCost:[0,50,1],
+  marketValue:[0,5000,1], mass:[0,100,0.01], nutrition:[0,2,0.01], comfortOffset:[-1,1,0.01],
+  armorPenetration:[0,2,0.01], armorRating_Blunt:[0,2,0.01], armorRating_Sharp:[0,2,0.01],
+  MoveSpeed:[0,10,0.1], MarketValue:[0,5000,1], MaxHitPoints:[0,5000,1],
+  Flammability:[0,1,0.01], ArmorRating_Blunt:[0,2,0.01], ArmorRating_Sharp:[0,2,0.01]
+};
+function feSliderField(labelTxt, el, body, upd, min, max, step) {
+  const row = feRow(labelTxt, body);
+  const wrap = document.createElement('div'); wrap.className = 'sf-slider-wrap';
+  const slider = document.createElement('input'); slider.type = 'range';
+  slider.className = 'sf-slider'; slider.min = min; slider.max = max; slider.step = step;
+  slider.value = parseFloat(el.textContent.trim()) || 0;
+  const num = document.createElement('input'); num.type = 'number'; num.className = 'sf-slider-num';
+  num.min = min; num.max = max; num.step = step; num.value = slider.value;
+  num.dataset.kind = 'number';
+  slider.addEventListener('input', () => { num.value = slider.value; el.textContent = slider.value; upd(); });
+  num.addEventListener('input', () => { slider.value = num.value; el.textContent = num.value; upd(); });
+  wrap.appendChild(slider); wrap.appendChild(num);
+  row.appendChild(wrap);
+}
+
+// Searchable defName picker for cross-references
+function feDefField(labelTxt, el, body, upd, defTags) {
+  const row = feRow(labelTxt, body);
+  const wrap = document.createElement('div'); wrap.className = 'sf-def-wrap sd-wrap';
+  const inp = document.createElement('input'); inp.type = 'text'; inp.value = el.textContent.trim();
+  const dd = document.createElement('div'); dd.className = 'sd-drop';
+
+  function getDefNames() {
+    const found = [];
+    function walk(nodes) {
+      for (const n of nodes) {
+        if (n.type === 'folder') { walk(n.children||[]); continue; }
+        if (!isXml(n.name)||!n.content) continue;
+        for (const tag of defTags) {
+          const re = new RegExp(`<${tag}[\\s\\S]*?<defName>([^<]+)</defName>`, 'g');
+          let m; while((m = re.exec(n.content)) !== null) found.push({ dn: m[1].trim(), tag, mod: true });
+        }
+      }
+    }
+    walk(data.children||[]);
+    return found;
+  }
+
+  function fillDefDd(q) {
+    dd.innerHTML = '';
+    const lq = q.toLowerCase();
+    const names = getDefNames();
+    names.filter(d => !lq || d.dn.toLowerCase().includes(lq)).slice(0,25).forEach(d => {
+      const it = document.createElement('div'); it.className = 'sd-item';
+      it.textContent = '⬡ ' + d.dn;
+      it.style.color = '#7aabf0';
+      it.addEventListener('mousedown', e => { e.preventDefault(); inp.value = d.dn; el.textContent = d.dn; upd(); dd.classList.remove('open'); });
+      dd.appendChild(it);
+    });
+    dd.classList.toggle('open', dd.children.length > 0);
+  }
+
+  inp.dataset.kind = 'defref';
+  inp.addEventListener('input', () => { el.textContent = inp.value; upd(); fillDefDd(inp.value); });
+  inp.addEventListener('focus', () => fillDefDd(inp.value));
+  inp.addEventListener('blur', () => setTimeout(() => dd.classList.remove('open'), 150));
+  wrap.appendChild(inp); wrap.appendChild(dd);
+  row.appendChild(wrap);
+}
+
+// Ingredient filter builder (allowedDefs and allowedCategories)
+function feIngredientFilter(el, body, upd, doc) {
+  const b2 = mkSec('Ingredient Filter', body);
+  ['allowedDefs','allowedCategories','disallowedCategories'].forEach(section => {
+    const secEl = el.querySelector(':scope > ' + section) || el.querySelector(':scope > filter > ' + section);
+    const label = document.createElement('div');
+    label.style.cssText = 'font-size:10px;color:#6b7a96;text-transform:uppercase;margin:4px 0 3px;font-weight:700;';
+    label.textContent = section;
+    b2.appendChild(label);
+
+    const tagsWrap = document.createElement('div'); tagsWrap.className = 'if-tags'; b2.appendChild(tagsWrap);
+    function renderTags() {
+      tagsWrap.innerHTML = '';
+      if (!secEl) return;
+      [...secEl.querySelectorAll('li')].forEach(li => {
+        const tag = document.createElement('span'); tag.className = 'if-tag';
+        tag.textContent = li.textContent.trim();
+        const x = document.createElement('span'); x.textContent = '×';
+        x.addEventListener('click', () => { secEl.removeChild(li); upd(); renderTags(); });
+        tag.appendChild(x); tagsWrap.appendChild(tag);
+      });
+    }
+    renderTags();
+    const addRow = document.createElement('div'); addRow.className = 'if-row';
+    const addInp = document.createElement('input'); addInp.placeholder = 'Add entry…'; addInp.type = 'text';
+    const addBtn = document.createElement('button'); addBtn.className = 'add-btn'; addBtn.textContent = '+';
+    addBtn.addEventListener('click', () => {
+      const val = addInp.value.trim(); if (!val) return;
+      let sec = el.querySelector(':scope > ' + section);
+      if (!sec) { sec = doc.createElement(section); el.appendChild(sec); }
+      const li = doc.createElement('li'); li.textContent = val; sec.appendChild(li);
+      addInp.value = ''; upd(); renderTags();
+    });
+    addInp.addEventListener('keydown', e => { if (e.key === 'Enter') addBtn.click(); });
+    addRow.appendChild(addInp); addRow.appendChild(addBtn); b2.appendChild(addRow);
+  });
+}
+
+function feRow(labelTxt, body) {
+  const row = document.createElement('div'); row.className = 'fe-row';
+  const l = document.createElement('label'); l.textContent = labelTxt;
+  row.appendChild(l); body.appendChild(row);
+  return row;
+}
+
+function bindEl(el, inp, upd) {
+  inp.value = el.textContent.trim();
+  inp.addEventListener('input', () => { el.textContent = inp.value; upd(); });
+}
+
+function addTextField(lbl, el, body, upd) {
+  const row = feRow(lbl, body);
+  const inp = document.createElement('input'); inp.type = 'text'; inp.dataset.kind = 'text';
+  bindEl(el, inp, upd);
+  row.appendChild(inp);
+}
+
+function addTextArea(lbl, el, body, upd) {
+  const row = feRow(lbl, body); row.style.alignItems = 'flex-start';
+  const ta = document.createElement('textarea'); ta.dataset.kind = 'text';
+  bindEl(el, ta, upd);
+  row.appendChild(ta);
+}
+
+function addSelect(lbl, el, body, upd, options) {
+  const row = feRow(lbl, body);
+  const sel = document.createElement('select'); sel.dataset.kind = 'enum';
+  options.forEach(o => { const opt = document.createElement('option'); opt.value = o; opt.textContent = o; sel.appendChild(opt); });
+  sel.value = el.textContent.trim();
+  sel.addEventListener('change', () => { el.textContent = sel.value; upd(); });
+  row.appendChild(sel);
+}
+
+function getOrMake(parent, tag, doc) {
+  let el = parent.querySelector(':scope > ' + tag);
+  if (!el) { el = doc.createElement(tag); parent.appendChild(el); }
+  return el;
+}
+
+// About.xml
+function renderAboutForm(root, container, upd, doc) {
+  const b = mkSec('Mod Info', container);
+  ['name','author','packageId','url'].forEach(tag => {
+    const el = getOrMake(root, tag, doc);
+    addTextField(tag, el, b, upd);
+  });
+  addTextArea('description', getOrMake(root, 'description', doc), b, upd);
+
+  const svB = mkSec('Supported Versions', container);
+  const sv = getOrMake(root, 'supportedVersions', doc);
+  const inp = document.createElement('input'); inp.type = 'text';
+  inp.placeholder = '1.4, 1.5';
+  inp.style.cssText = 'width:100%;background:#1e2430;border:1px solid #3a4254;color:#cfd6e4;border-radius:5px;padding:4px 8px;font-size:12px';
+  inp.value = [...sv.querySelectorAll('li')].map(e => e.textContent.trim()).join(', ');
+  inp.addEventListener('input', () => {
+    while (sv.firstChild) sv.removeChild(sv.firstChild);
+    inp.value.split(',').map(s => s.trim()).filter(Boolean).forEach(v => {
+      const li = doc.createElement('li'); li.textContent = v; sv.appendChild(li);
+    });
+    upd();
+  });
+  svB.appendChild(inp);
+}
+
+// Def section
+function renderDefSection(def, container, upd, doc) {
+  const dn = def.querySelector(':scope > defName');
+  const title = def.tagName + (dn ? ': ' + dn.textContent : '');
+  const b = mkSec(title, container);
+
+  // Core fields
+  ['defName','label','thingClass'].forEach(tag => {
+    const el = def.querySelector(':scope > ' + tag); if (!el) return;
+    addTextField(tag, el, b, upd);
+  });
+  const descEl = def.querySelector(':scope > description');
+  if (descEl) addTextArea('description', descEl, b, upd);
+
+  const par = (def.getAttribute('ParentName') || '').toLowerCase();
+  const isMelee = par.includes('melee') || !!def.querySelector(':scope > tools');
+  const isRanged = par.includes('gun') || par.includes('ranged') || !!def.querySelector(':scope > verbs');
+  const isApparel = par.includes('apparel') || par.includes('hat') || par.includes('armor') || !!def.querySelector(':scope > apparel');
+  const isResearch = def.tagName === 'ResearchProjectDef';
+  const isRecipe = def.tagName === 'RecipeDef';
+
+  if (def.querySelector(':scope > graphicData')) feGraphicData(def, container, upd, doc);
+  if (def.querySelector(':scope > statBases')) feStatBases(def, container, upd, doc);
+  if (isMelee || isApparel || def.querySelector(':scope > stuffCategories')) feStuffCats(def, container, upd, doc);
+  if (def.querySelector(':scope > costList')) feCostList(def, container, upd, doc);
+  if (isMelee || def.querySelector(':scope > tools')) feTools(def, container, upd, doc);
+  if (isRanged || def.querySelector(':scope > verbs')) feVerbs(def, container, upd, doc);
+  if (isApparel || def.querySelector(':scope > apparel')) feApparel(def, container, upd, doc);
+  if (def.querySelector(':scope > recipeMaker')) feRecipeMaker(def, container, upd, doc);
+  if (!isResearch && (def.querySelector(':scope > researchPrerequisites') || isMelee || isRanged || isApparel)) feResPrereqs(def, container, upd, doc);
+  if (isResearch) feResearchDef(def, container, upd, doc);
+  if (isRecipe) feRecipeDef(def, container, upd, doc);
+
+  // Unknown fields
+  const known = new Set(['defName','label','description','thingClass','graphicData','statBases','stuffCategories','costList','tools','verbs','apparel','recipeMaker','researchPrerequisites','techLevel','tab','researchViewX','researchViewY','workAmount','ingredients','fixedIngredientFilter','products','skillRequirements','workSkill','prerequisites','baseCost','jobString']);
+  const unkB = mkSec('Other Fields', container);
+  let hasUnk = false;
+  for (const child of [...def.children]) {
+    if (!known.has(child.tagName)) { feUnknown(child, unkB, upd); hasUnk = true; }
+  }
+  if (!hasUnk) unkB.innerHTML = '<p style="color:#5b6377;font-size:11px">No additional fields.</p>';
+}
+
+function feGraphicData(def, container, upd, doc) {
+  let gd = def.querySelector(':scope > graphicData');
+  if (!gd) return;
+  const b = mkSec('Graphic Data', container);
+  const getOrMakeChild = tag => {
+    let el = gd.querySelector(':scope > ' + tag);
+    if (!el) { el = doc.createElement(tag); gd.appendChild(el); }
+    return el;
+  };
+
+  const GRAPHIC_CLASSES = ['Graphic_Single','Graphic_Multi','Graphic_StackCount','Graphic_Random','Graphic_Flicker','Graphic_Terrain','Graphic_MoteWithAgeSecs'];
+  fePathField('Texture Path', getOrMakeChild('texPath'), b, upd, 'Textures', ['png','jpg','jpeg'], { showPreview: true });
+
+  const gcEl = getOrMakeChild('graphicClass');
+  const gcRow = feRow('Graphic Class', b);
+  const gcSel = document.createElement('select');
+  GRAPHIC_CLASSES.forEach(v => { const o = document.createElement('option'); o.value = v; o.textContent = v; if (v === gcEl.textContent.trim()) o.selected = true; gcSel.appendChild(o); });
+  const gcOther = document.createElement('input'); gcOther.type = 'text'; gcOther.placeholder = 'Custom…';
+  gcOther.style.width = '140px';
+  if (!GRAPHIC_CLASSES.includes(gcEl.textContent.trim())) { gcOther.value = gcEl.textContent.trim(); gcSel.value = ''; }
+  gcSel.addEventListener('change', () => { if (gcSel.value) { gcEl.textContent = gcSel.value; gcOther.value = ''; upd(); } });
+  gcOther.addEventListener('input', () => { gcEl.textContent = gcOther.value; upd(); });
+  gcRow.appendChild(gcSel); gcRow.appendChild(gcOther);
+
+  // drawSize
+  const dsEl = gd.querySelector(':scope > drawSize');
+  if (dsEl) addTextField('Draw Size', dsEl, b, upd);
+
+  // color
+  const colEl = gd.querySelector(':scope > color');
+  if (colEl) feColorField('Color', colEl, b, upd);
+  else {
+    const addColBtn = document.createElement('button'); addColBtn.className = 'add-btn'; addColBtn.textContent = '+ Add Color Override';
+    addColBtn.addEventListener('click', () => {
+      const c = doc.createElement('color'); c.textContent = '(1, 1, 1, 1)'; gd.appendChild(c);
+      addColBtn.remove(); feColorField('Color', c, b, upd);
+    });
+    b.appendChild(addColBtn);
+  }
+}
+
+function feStatBases(def, container, upd, doc) {
+  let sb = def.querySelector(':scope > statBases');
+  const b = mkSec('Stat Bases', container);
+  const list = document.createElement('div'); b.appendChild(list);
+  function refresh() {
+    list.innerHTML = '';
+    for (const stat of [...(sb ? sb.children : [])]) {
+      const row = document.createElement('div'); row.className = 'stat-row';
+      const sel = document.createElement('select');
+      ALL_STATS.forEach(s => { const o = document.createElement('option'); o.value = s; o.textContent = s; sel.appendChild(o); });
+      const cust = document.createElement('option'); cust.value = '__c'; cust.textContent = 'Custom…'; sel.appendChild(cust);
+      sel.value = ALL_STATS.includes(stat.tagName) ? stat.tagName : '__c';
+      const ni = document.createElement('input'); ni.type = 'text'; ni.placeholder = 'Stat name'; ni.value = stat.tagName; ni.style.display = sel.value === '__c' ? '' : 'none';
+      sel.addEventListener('change', () => {
+        if (sel.value !== '__c') {
+          const ne = doc.createElement(sel.value); ne.textContent = stat.textContent;
+          sb.replaceChild(ne, stat); ni.style.display = 'none'; upd(); refresh();
+        } else ni.style.display = '';
+      });
+      ni.addEventListener('change', () => {
+        const ne = doc.createElement(ni.value || 'Stat'); ne.textContent = stat.textContent;
+        sb.replaceChild(ne, stat); upd(); refresh();
+      });
+      const bounds = SLIDER_BOUNDS[stat.tagName];
+      let vi;
+      if (bounds) {
+        const [mn,mx,st2] = bounds;
+        const sl = document.createElement('input'); sl.type = 'range'; sl.className = 'sf-slider'; sl.min=mn; sl.max=mx; sl.step=st2; sl.value=parseFloat(stat.textContent)||0;
+        vi = document.createElement('input'); vi.type = 'number'; vi.className = 'sf-slider-num'; vi.min=mn; vi.max=mx; vi.step=st2; vi.value=sl.value;
+        sl.addEventListener('input', () => { vi.value=sl.value; stat.textContent=sl.value; upd(); });
+        vi.addEventListener('input', () => { sl.value=vi.value; stat.textContent=vi.value; upd(); });
+        row.appendChild(sl);
+      } else {
+        vi = document.createElement('input'); vi.type = 'text'; vi.placeholder = 'Value'; vi.value = stat.textContent.trim();
+        vi.addEventListener('input', () => { stat.textContent = vi.value; upd(); });
+      }
+      const rb = document.createElement('button'); rb.className = 'rm-btn'; rb.textContent = '×';
+      rb.addEventListener('click', () => { sb.removeChild(stat); upd(); refresh(); });
+      row.appendChild(sel); row.appendChild(ni); row.appendChild(vi); row.appendChild(rb);
+      list.appendChild(row);
+    }
+    const add = document.createElement('button'); add.className = 'add-btn'; add.textContent = '+ Add Stat';
+    add.addEventListener('click', () => {
+      if (!sb) { sb = doc.createElement('statBases'); def.appendChild(sb); }
+      const el = doc.createElement('MaxHitPoints'); el.textContent = '100'; sb.appendChild(el); upd(); refresh();
+    });
+    list.appendChild(add);
+  }
+  refresh();
+}
+
+function feStuffCats(def, container, upd, doc) {
+  let sc = def.querySelector(':scope > stuffCategories');
+  const b = mkSec('Stuff Categories', container);
+  const grp = document.createElement('div'); grp.className = 'cb-group';
+  STUFF_CATS.forEach(cat => {
+    const l = document.createElement('label');
+    const cb = document.createElement('input'); cb.type = 'checkbox';
+    cb.checked = sc ? [...sc.querySelectorAll('li')].some(e => e.textContent.trim() === cat) : false;
+    cb.addEventListener('change', () => {
+      if (!sc) { sc = doc.createElement('stuffCategories'); def.appendChild(sc); }
+      const ex = [...sc.querySelectorAll('li')].find(e => e.textContent.trim() === cat);
+      if (cb.checked && !ex) { const li = doc.createElement('li'); li.textContent = cat; sc.appendChild(li); }
+      else if (!cb.checked && ex) sc.removeChild(ex);
+      upd();
+    });
+    l.appendChild(cb); l.appendChild(document.createTextNode(' ' + cat)); grp.appendChild(l);
+  });
+  b.appendChild(grp);
+}
+
+function feCostList(def, container, upd, doc) {
+  let cl = def.querySelector(':scope > costList');
+  const b = mkSec('Cost List', container);
+  const list = document.createElement('div'); b.appendChild(list);
+  function refresh() {
+    list.innerHTML = '';
+    for (const item of [...(cl ? cl.children : [])]) {
+      const row = document.createElement('div'); row.className = 'cost-row';
+      const sdW = document.createElement('div'); sdW.className = 'sf-def-wrap sd-wrap'; sdW.style.flex='1';
+      const ni = document.createElement('input'); ni.placeholder = 'ThingDef (e.g. Steel)'; ni.value = item.tagName; ni.style.width='100%';
+      const ndd = document.createElement('div'); ndd.className = 'sd-drop';
+      ni.addEventListener('change', () => {
+        const ne = doc.createElement(ni.value || 'Steel'); ne.textContent = item.textContent;
+        cl.replaceChild(ne, item); upd(); refresh();
+      });
+      ni.addEventListener('input', () => {
+        const lq = ni.value.toLowerCase(); ndd.innerHTML = '';
+        const modDefs = []; function walkCl(nodes) { for(const n of nodes){ if(n.type==='folder'){walkCl(n.children||[]);continue;} if(!isXml(n.name)||!n.content)continue; const r=/<ThingDef[\s\S]*?<defName>([^<]+)<\/defName>/g; let m; while((m=r.exec(n.content))!==null)modDefs.push(m[1].trim()); } } walkCl(data.children||[]);
+        modDefs.filter(d=>d.toLowerCase().includes(lq)).slice(0,15).forEach(d=>{ const it=document.createElement('div');it.className='sd-item';it.textContent='⬡ '+d;it.style.color='#7aabf0';it.addEventListener('mousedown',e=>{e.preventDefault();ni.value=d;const ne=doc.createElement(d);ne.textContent=item.textContent;cl.replaceChild(ne,item);upd();refresh();ndd.classList.remove('open');});ndd.appendChild(it); });
+        ndd.classList.toggle('open', ndd.children.length > 0);
+      });
+      ni.addEventListener('blur', () => setTimeout(() => ndd.classList.remove('open'), 150));
+      sdW.appendChild(ni); sdW.appendChild(ndd);
+      const ci = document.createElement('input'); ci.type = 'number'; ci.min = '1'; ci.placeholder = 'Count'; ci.value = item.textContent.trim(); ci.style.maxWidth = '80px';
+      ci.addEventListener('input', () => { item.textContent = ci.value; upd(); });
+      const rb = document.createElement('button'); rb.className = 'rm-btn'; rb.textContent = '×';
+      rb.addEventListener('click', () => { cl.removeChild(item); upd(); refresh(); });
+      row.appendChild(sdW); row.appendChild(ci); row.appendChild(rb); list.appendChild(row);
+    }
+    const add = document.createElement('button'); add.className = 'add-btn'; add.textContent = '+ Add Material';
+    add.addEventListener('click', () => {
+      if (!cl) { cl = doc.createElement('costList'); def.appendChild(cl); }
+      const el = doc.createElement('Steel'); el.textContent = '50'; cl.appendChild(el); upd(); refresh();
+    });
+    list.appendChild(add);
+  }
+  refresh();
+}
+
+function feTools(def, container, upd, doc) {
+  let toolsEl = def.querySelector(':scope > tools');
+  const b = mkSec('Melee Tools', container);
+  const list = document.createElement('div'); b.appendChild(list);
+  function refresh() {
+    list.innerHTML = '';
+    for (const tool of [...(toolsEl ? toolsEl.children : [])]) {
+      const card = document.createElement('div'); card.className = 'tool-card';
+      const hdr = document.createElement('div'); hdr.className = 'tool-card-hdr';
+      const lbl = tool.querySelector('label');
+      hdr.innerHTML = `<span>${lbl ? lbl.textContent : 'Tool'}</span>`;
+      const rb = document.createElement('button'); rb.className = 'hdr-btn'; rb.style.color = '#c0392b'; rb.textContent = '× Remove';
+      rb.addEventListener('click', () => { toolsEl.removeChild(tool); upd(); refresh(); });
+      hdr.appendChild(rb); card.appendChild(hdr);
+
+      function tf(lbl, tag) {
+        const row = document.createElement('div'); row.className = 'fe-row';
+        const l = document.createElement('label'); l.textContent = lbl; l.style.minWidth = '110px'; row.appendChild(l);
+        let el = tool.querySelector(tag);
+        if (!el) { el = doc.createElement(tag); tool.appendChild(el); }
+        const inp = document.createElement('input'); inp.type = 'text'; inp.value = el.textContent.trim();
+        inp.addEventListener('input', () => { el.textContent = inp.value; upd(); });
+        row.appendChild(inp); card.appendChild(row);
+      }
+      tf('Label', 'label');
+
+      let caps = tool.querySelector('capacities');
+      if (!caps) { caps = doc.createElement('capacities'); tool.appendChild(caps); }
+      const capRow = document.createElement('div'); capRow.className = 'fe-row'; capRow.style.alignItems = 'flex-start';
+      const capLbl = document.createElement('label'); capLbl.textContent = 'Capacities'; capLbl.style.minWidth = '110px'; capLbl.style.paddingTop = '6px'; capRow.appendChild(capLbl);
+      const tagWrap = document.createElement('div'); tagWrap.style.cssText = 'flex:1;display:flex;flex-wrap:wrap;gap:4px;align-items:center;background:#1a1f2e;border:1px solid #2e3750;border-radius:4px;padding:4px 6px;min-height:32px;';
+      function renderCapTags() {
+        tagWrap.innerHTML = '';
+        [...caps.querySelectorAll('li')].forEach(liEl => {
+          const tag = document.createElement('span');
+          tag.style.cssText = 'background:#2e3750;color:#c8d0e0;border-radius:3px;padding:2px 6px;font-size:12px;display:flex;align-items:center;gap:4px;';
+          tag.textContent = liEl.textContent.trim();
+          const x = document.createElement('span'); x.textContent = '×'; x.style.cssText = 'cursor:pointer;color:#e05e5e;font-size:14px;line-height:1;';
+          x.addEventListener('click', () => { caps.removeChild(liEl); upd(); renderCapTags(); });
+          tag.appendChild(x); tagWrap.appendChild(tag);
+        });
+        const inp = document.createElement('input'); inp.type = 'text'; inp.placeholder = 'Add capacity…';
+        inp.style.cssText = 'background:transparent;border:none;outline:none;color:#c8d0e0;font-size:12px;min-width:100px;flex:1;';
+        inp.addEventListener('keydown', e => {
+          if (e.key === 'Enter' || e.key === ',') {
+            e.preventDefault();
+            const val = inp.value.trim().replace(/,$/, '');
+            if (val) { const li = doc.createElement('li'); li.textContent = val; caps.appendChild(li); upd(); renderCapTags(); }
+          } else if (e.key === 'Backspace' && inp.value === '') {
+            const last = caps.querySelector('li:last-child');
+            if (last) { caps.removeChild(last); upd(); renderCapTags(); }
+          }
+        });
+        tagWrap.appendChild(inp);
+      }
+      renderCapTags();
+      capRow.appendChild(tagWrap); card.appendChild(capRow);
+      tf('Power (damage)', 'power');
+      tf('Cooldown Time', 'cooldownTime');
+      tf('Armor Penetration', 'armorPenetration');
+      tf('Body Parts Group', 'linkedBodyPartsGroup');
+      list.appendChild(card);
+    }
+    const add = document.createElement('button'); add.className = 'add-btn'; add.textContent = '+ Add Tool';
+    add.addEventListener('click', () => {
+      if (!toolsEl) { toolsEl = doc.createElement('tools'); def.appendChild(toolsEl); }
+      const li = doc.createElement('li'); li.setAttribute('Class', 'Tool');
+      const lbl = doc.createElement('label'); lbl.textContent = 'NewTool'; li.appendChild(lbl);
+      const caps = doc.createElement('capacities'); li.appendChild(caps);
+      const pw = doc.createElement('power'); pw.textContent = '12'; li.appendChild(pw);
+      const cd = doc.createElement('cooldownTime'); cd.textContent = '2'; li.appendChild(cd);
+      toolsEl.appendChild(li); upd(); refresh();
+    });
+    list.appendChild(add);
+  }
+  refresh();
+}
+
+function feVerbs(def, container, upd, doc) {
+  let verbsEl = def.querySelector(':scope > verbs');
+  const b = mkSec('Ranged Verbs', container);
+  const list = document.createElement('div'); b.appendChild(list);
+  function refresh() {
+    list.innerHTML = '';
+    for (const verb of [...(verbsEl ? verbsEl.children : [])]) {
+      const card = document.createElement('div'); card.className = 'tool-card';
+      function vf(lbl, tag) {
+        const row = document.createElement('div'); row.className = 'fe-row';
+        const l = document.createElement('label'); l.textContent = lbl; l.style.minWidth = '130px'; row.appendChild(l);
+        let el = verb.querySelector(tag);
+        if (!el) { el = doc.createElement(tag); verb.appendChild(el); }
+        const inp = document.createElement('input'); inp.type = 'text'; inp.value = el.textContent.trim();
+        inp.addEventListener('input', () => { el.textContent = inp.value; upd(); });
+        row.appendChild(inp); card.appendChild(row);
+      }
+      function vfEl(tag) {
+        let el = verb.querySelector(tag);
+        if (!el) { el = doc.createElement(tag); verb.appendChild(el); }
+        return el;
+      }
+      vf('Verb Class', 'verbClass');
+      feDefField('Projectile Def', vfEl('defaultProjectile'), card, upd, ['ThingDef','ProjectileDef']);
+      vf('Warm-up Time', 'warmupTime');
+      vf('Range', 'range');
+      vf('Burst Count', 'burstShotCount');
+      vf('Ticks Between Shots', 'ticksBetweenBurstShots');
+      fePathField('Sound Cast', vfEl('soundCast'), card, upd, 'Sounds', ['wav','ogg','mp3']);
+      const rb = document.createElement('button'); rb.className = 'hdr-btn'; rb.style.color = '#c0392b'; rb.textContent = '× Remove';
+      rb.addEventListener('click', () => { verbsEl.removeChild(verb); upd(); refresh(); });
+      card.appendChild(rb); list.appendChild(card);
+    }
+    const add = document.createElement('button'); add.className = 'add-btn'; add.textContent = '+ Add Verb';
+    add.addEventListener('click', () => {
+      if (!verbsEl) { verbsEl = doc.createElement('verbs'); def.appendChild(verbsEl); }
+      const li = doc.createElement('li');
+      const vc = doc.createElement('verbClass'); vc.textContent = 'Verb_Shoot'; li.appendChild(vc);
+      verbsEl.appendChild(li); upd(); refresh();
+    });
+    list.appendChild(add);
+  }
+  refresh();
+}
+
+function feApparel(def, container, upd, doc) {
+  let ap = def.querySelector(':scope > apparel');
+  if (!ap) { ap = doc.createElement('apparel'); def.appendChild(ap); }
+  const b = mkSec('Apparel Coverage', container);
+
+  let layersEl = ap.querySelector('layers');
+  if (!layersEl) { layersEl = doc.createElement('layers'); ap.appendChild(layersEl); }
+  const ll = document.createElement('div'); ll.style.marginBottom = '8px';
+  ll.innerHTML = '<div style="font-size:11px;color:#9aa5b8;margin-bottom:4px">Layers:</div>';
+  const lgrp = document.createElement('div'); lgrp.className = 'cb-group';
+  APPAREL_LAYERS.forEach(layer => {
+    const l = document.createElement('label'); const cb = document.createElement('input'); cb.type = 'checkbox';
+    cb.checked = [...layersEl.querySelectorAll('li')].some(e => e.textContent.trim() === layer);
+    cb.addEventListener('change', () => {
+      const ex = [...layersEl.querySelectorAll('li')].find(e => e.textContent.trim() === layer);
+      if (cb.checked && !ex) { const li = doc.createElement('li'); li.textContent = layer; layersEl.appendChild(li); }
+      else if (!cb.checked && ex) layersEl.removeChild(ex);
+      upd();
+    });
+    l.appendChild(cb); l.appendChild(document.createTextNode(' ' + layer)); lgrp.appendChild(l);
+  });
+  ll.appendChild(lgrp); b.appendChild(ll);
+
+  let bpEl = ap.querySelector('bodyPartGroups');
+  if (!bpEl) { bpEl = doc.createElement('bodyPartGroups'); ap.appendChild(bpEl); }
+  const bl = document.createElement('div');
+  bl.innerHTML = '<div style="font-size:11px;color:#9aa5b8;margin-bottom:4px">Body Part Groups:</div>';
+  const bgrp = document.createElement('div'); bgrp.className = 'cb-group';
+  BODY_PARTS.forEach(bp => {
+    const l = document.createElement('label'); const cb = document.createElement('input'); cb.type = 'checkbox';
+    cb.checked = [...bpEl.querySelectorAll('li')].some(e => e.textContent.trim() === bp);
+    cb.addEventListener('change', () => {
+      const ex = [...bpEl.querySelectorAll('li')].find(e => e.textContent.trim() === bp);
+      if (cb.checked && !ex) { const li = doc.createElement('li'); li.textContent = bp; bpEl.appendChild(li); }
+      else if (!cb.checked && ex) bpEl.removeChild(ex);
+      upd();
+    });
+    l.appendChild(cb); l.appendChild(document.createTextNode(' ' + bp)); bgrp.appendChild(l);
+  });
+  bl.appendChild(bgrp); b.appendChild(bl);
+}
+
+function feRecipeMaker(def, container, upd, doc) {
+  const rm = def.querySelector(':scope > recipeMaker');
+  if (!rm) return;
+  const b = mkSec('Recipe Maker', container);
+  const waEl = rm.querySelector('workAmount'); if (waEl) addTextField('Work Amount', waEl, b, upd);
+  const wsEl = rm.querySelector('workSkill'); if (wsEl) addSelect('Work Skill', wsEl, b, upd, SKILL_DEFS);
+  const rpEl = rm.querySelector('researchPrerequisite');
+  if (rpEl) {
+    const row = feRow('Research Prerequisite', b);
+    const wrap = document.createElement('div'); wrap.className = 'sd-wrap';
+    const inp = document.createElement('input'); inp.type = 'text'; inp.value = rpEl.textContent.trim();
+    const dd = document.createElement('div'); dd.className = 'sd-drop';
+    inp.addEventListener('focus', () => fillDd(inp.value, dd, inp, rpEl, upd));
+    inp.addEventListener('input', () => { rpEl.textContent = inp.value; upd(); fillDd(inp.value, dd, inp, rpEl, upd); });
+    inp.addEventListener('blur', () => setTimeout(() => dd.classList.remove('open'), 150));
+    wrap.appendChild(inp); wrap.appendChild(dd); row.appendChild(wrap);
+  }
+}
+
+function feResPrereqs(def, container, upd, doc) {
+  let rp = def.querySelector(':scope > researchPrerequisites');
+  const b = mkSec('Research Prerequisites', container);
+  const list = document.createElement('div'); b.appendChild(list);
+  function refresh() {
+    list.innerHTML = '';
+    for (const li of [...(rp ? rp.querySelectorAll('li') : [])]) {
+      const row = document.createElement('div'); row.className = 'cost-row';
+      const wrap = document.createElement('div'); wrap.className = 'sd-wrap';
+      const inp = document.createElement('input'); inp.type = 'text'; inp.value = li.textContent.trim(); inp.placeholder = 'Research def…';
+      const dd = document.createElement('div'); dd.className = 'sd-drop';
+      inp.addEventListener('focus', () => fillDd(inp.value, dd, inp, li, upd));
+      inp.addEventListener('input', () => { li.textContent = inp.value; upd(); fillDd(inp.value, dd, inp, li, upd); });
+      inp.addEventListener('blur', () => setTimeout(() => dd.classList.remove('open'), 150));
+      wrap.appendChild(inp); wrap.appendChild(dd);
+      const rb = document.createElement('button'); rb.className = 'rm-btn'; rb.textContent = '×';
+      rb.addEventListener('click', () => { rp.removeChild(li); upd(); refresh(); });
+      row.appendChild(wrap); row.appendChild(rb); list.appendChild(row);
+    }
+    const add = document.createElement('button'); add.className = 'add-btn'; add.textContent = '+ Add Prerequisite';
+    add.addEventListener('click', () => {
+      if (!rp) { rp = doc.createElement('researchPrerequisites'); def.appendChild(rp); }
+      const li = doc.createElement('li'); li.textContent = ''; rp.appendChild(li); upd(); refresh();
+    });
+    list.appendChild(add);
+  }
+  refresh();
+}
+
+function feResearchDef(def, container, upd, doc) {
+  const b = mkSec('Research Details', container);
+  [['Tech Level','techLevel',TECH_LEVELS],['Tab','tab',['Main','Misc']]].forEach(([lbl,tag,opts]) => {
+    const el = def.querySelector(':scope > ' + tag); if (!el) return;
+    addSelect(lbl, el, b, upd, opts);
+  });
+  [['Work Amount','workAmount'],['View X','researchViewX'],['View Y','researchViewY'],['Base Cost','baseCost']].forEach(([lbl,tag]) => {
+    const el = def.querySelector(':scope > ' + tag); if (!el) return;
+    addTextField(lbl, el, b, upd);
+  });
+  let preEl = def.querySelector(':scope > prerequisites');
+  const preB = mkSec('Prerequisites', container);
+  const list = document.createElement('div'); preB.appendChild(list);
+  function refresh() {
+    list.innerHTML = '';
+    for (const li of [...(preEl ? preEl.querySelectorAll('li') : [])]) {
+      const row = document.createElement('div'); row.className = 'cost-row';
+      const wrap = document.createElement('div'); wrap.className = 'sd-wrap';
+      const inp = document.createElement('input'); inp.type = 'text'; inp.value = li.textContent.trim(); inp.placeholder = 'Research def…';
+      const dd = document.createElement('div'); dd.className = 'sd-drop';
+      inp.addEventListener('focus', () => fillDd(inp.value, dd, inp, li, upd));
+      inp.addEventListener('input', () => { li.textContent = inp.value; upd(); fillDd(inp.value, dd, inp, li, upd); });
+      inp.addEventListener('blur', () => setTimeout(() => dd.classList.remove('open'), 150));
+      wrap.appendChild(inp); wrap.appendChild(dd);
+      const rb = document.createElement('button'); rb.className = 'rm-btn'; rb.textContent = '×';
+      rb.addEventListener('click', () => { preEl.removeChild(li); upd(); refresh(); });
+      row.appendChild(wrap); row.appendChild(rb); list.appendChild(row);
+    }
+    const add = document.createElement('button'); add.className = 'add-btn'; add.textContent = '+ Add Prerequisite';
+    add.addEventListener('click', () => {
+      if (!preEl) { preEl = doc.createElement('prerequisites'); def.appendChild(preEl); }
+      const li = doc.createElement('li'); li.textContent = ''; preEl.appendChild(li); upd(); refresh();
+    });
+    list.appendChild(add);
+  }
+  refresh();
+}
+
+function feRecipeDef(def, container, upd, doc) {
+  const b = mkSec('Recipe Details', container);
+  [['Work Amount','workAmount'],['Job String','jobString']].forEach(([lbl,tag]) => {
+    const el = def.querySelector(':scope > ' + tag); if (!el) return;
+    addTextField(lbl, el, b, upd);
+  });
+  const wsEl = def.querySelector(':scope > workSkill'); if (wsEl) addSelect('Work Skill', wsEl, b, upd, SKILL_DEFS);
+
+  // fixedIngredientFilter builder
+  const fif = def.querySelector(':scope > fixedIngredientFilter');
+  if (fif) feIngredientFilter(fif, container, upd, doc);
+}
+
+function getModResearchDefs() {
+  const found = [];
+  function walk(nodes) {
+    for (const n of nodes) {
+      if (n.type === 'folder') { walk(n.children || []); continue; }
+      if (!isXml(n.name) || !n.content) continue;
+      const re = /<ResearchProjectDef[\s\S]*?<defName>([^<]+)<\/defName>/g;
+      let m;
+      while ((m = re.exec(n.content)) !== null) found.push(m[1].trim());
+    }
+  }
+  walk(data.children || []);
+  return found;
+}
+
+function fillDd(query, dd, inp, li, upd) {
+  dd.innerHTML = '';
+  const q = query.toLowerCase();
+  const modDefs = getModResearchDefs();
+  // Mod defs first (highlighted), then Core defs
+  const all = [...new Set([...modDefs, ...RESEARCH_DEFS])];
+  all.filter(r => r.toLowerCase().includes(q)).slice(0, 25).forEach(r => {
+    const d = document.createElement('div'); d.className = 'sd-item';
+    d.textContent = r;
+    if (modDefs.includes(r)) {
+      d.style.cssText = 'color:#7aabf0;';
+      d.textContent = '⬡ ' + r;
+    }
+    d.addEventListener('mousedown', e => { e.preventDefault(); inp.value = r; li.textContent = r; upd(); dd.classList.remove('open'); });
+    dd.appendChild(d);
+  });
+  dd.classList.toggle('open', dd.children.length > 0);
+}
+
+function feUnknown(el, container, upd) {
+  const wrap = document.createElement('div'); wrap.className = 'fe-unknown';
+  const lbl = document.createElement('div'); lbl.className = 'u-lbl'; lbl.textContent = el.tagName + ':';
+  wrap.appendChild(lbl);
+  const kids = [...el.children].filter(c => c.nodeType === 1);
+  if (!kids.length) {
+    const inp = document.createElement('input'); inp.type = 'text'; inp.value = el.textContent.trim();
+    inp.addEventListener('input', () => { el.textContent = inp.value; upd(); });
+    wrap.appendChild(inp);
+  } else {
+    const ta = document.createElement('textarea'); ta.rows = 3; ta.value = el.innerHTML.trim();
+    ta.addEventListener('input', () => { try { el.innerHTML = ta.value; upd(); } catch(e) {} });
+    wrap.appendChild(ta);
+  }
+  container.appendChild(wrap);
+}
+
+// ── Utility functions ──────────────────────────────────────────────────────────
+function findNode(node, id) {
+  if (node.id === id) return node;
+  if (node.type === 'folder') { for (const c of node.children) { const r = findNode(c, id); if (r) return r; } }
+  return null;
+}
+
+function findParentOf(id, node, parent) {
+  if (node.id === id) return parent;
+  if (node.type === 'folder') { for (const c of node.children) { const r = findParentOf(id, c, node); if (r) return r; } }
+  return null;
+}
+
+function findParentFolder() {
+  const target = selected ? findNode(data, selected) : null;
+  if (!target) return data;
+  if (target.type === 'folder') return target;
+  return findParentOf(selected, data, null) || data;
+}
+
+function uniqueName(parent, baseName) {
+  let name = baseName, i = 1;
+  while (parent.children.some(c => c.name === name)) {
+    const dot = baseName.lastIndexOf('.');
+    name = dot > 0 ? baseName.slice(0, dot) + ' (' + i + ')' + baseName.slice(dot) : baseName + ' (' + i + ')';
+    i++;
+  }
+  return name;
+}
+
+function uniqueNameExcluding(parent, baseName, excludeId) {
+  let name = baseName, i = 1;
+  while (parent.children.some(c => c.name === name && c.id !== excludeId)) {
+    const dot = baseName.lastIndexOf('.');
+    name = dot > 0 ? baseName.slice(0, dot) + ' (' + i + ')' + baseName.slice(dot) : baseName + ' (' + i + ')';
+    i++;
+  }
+  return name;
+}
+
+function ensureFolder(parent, name) {
+  let f = parent.children.find(c => c.type === 'folder' && c.name === name);
+  if (!f) { f = {type:'folder', name, open:true, id:'n'+(idCounter++), children:[]}; parent.children.push(f); }
+  return f;
+}
+
+function ensurePath(parts) {
+  let cur = data;
+  for (const part of parts) cur = ensureFolder(cur, part);
+  return cur;
+}
+
+function deepClone(node) {
+  const copy = JSON.parse(JSON.stringify(node));
+  (function reassign(n) { n.id = 'n'+(idCounter++); if (n.type==='folder') n.children.forEach(reassign); })(copy);
+  return copy;
+}
+
+// ── Sidebar header buttons ─────────────────────────────────────────────────────
+document.getElementById('newFolder').onclick = () => {
+  const parent = findParentFolder();
+  parent.open = true;
+  parent.children.push({type:'folder', name:uniqueName(parent,'NewFolder'), open:false, id:'n'+(idCounter++), children:[]});
+  render();
+};
+
+document.getElementById('newFile').onclick = () => {
+  const parent = findParentFolder();
+  parent.open = true;
+  parent.children.push({type:'file', name:uniqueName(parent,'NewFile.xml'), id:'n'+(idCounter++), kind:'text', content:''});
+  render();
+};
+
+document.getElementById('importImage').onclick = () => document.getElementById('imageInput').click();
+document.getElementById('imageInput').onchange = (e) => {
+  const files = Array.from(e.target.files);
+  if (!files.length) return;
+  const parent = findParentFolder();
+  parent.open = true;
+  let remaining = files.length;
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      parent.children.push({type:'file', name:uniqueName(parent, file.name), id:'n'+(idCounter++), kind:'image', content:reader.result});
+      if (--remaining === 0) render();
+    };
+    reader.readAsDataURL(file);
+  });
+  e.target.value = '';
+};
+
+// ── Context Menu ───────────────────────────────────────────────────────────────
+function closeContextMenu() { if (menuEl) { menuEl.remove(); menuEl = null; } }
+
+document.getElementById('appRoot').addEventListener('click', (e) => { if (menuEl && !menuEl.contains(e.target)) closeContextMenu(); });
+document.getElementById('appRoot').addEventListener('contextmenu', (e) => { if (!e.target.closest('[data-node-id]')) { e.preventDefault(); closeContextMenu(); } });
+
+function showContextMenu(x, y, node) {
+  closeContextMenu();
+  const root = document.getElementById('appRoot');
+  const rect = root.getBoundingClientRect();
+  menuEl = document.createElement('div');
+  menuEl.className = 'context-menu';
+  menuEl.style.left = Math.min(x - rect.left, rect.width - 160) + 'px';
+  menuEl.style.top = Math.min(y - rect.top, rect.height - 220) + 'px';
+
+  function item(label, icon, onClick, disabled) {
+    const it = document.createElement('div');
+    it.className = 'ctx-item' + (disabled ? ' disabled' : '');
+    it.innerHTML = `<i class="ti ti-${icon}"></i><span>${label}</span>`;
+    if (!disabled) it.onclick = () => { onClick(); closeContextMenu(); };
+    menuEl.appendChild(it);
+  }
+  function sep() { const s = document.createElement('div'); s.className = 'ctx-sep'; menuEl.appendChild(s); }
+
+  item('Rename', 'edit', () => renameNode(node));
+  sep();
+  item('Copy', 'copy', () => { clipboard = {mode:'copy', node}; });
+  item('Cut', 'cut', () => { clipboard = {mode:'cut', node}; });
+  item('Paste here', 'clipboard', () => pasteNode(node), !clipboard);
+  sep();
+  item('Delete', 'trash', () => deleteNode(node), node.id === 'root');
+
+  root.appendChild(menuEl);
+}
+
+function renameNode(node) {
+  const labelEl = nodeLabelMap.get(node.id);
+  if (labelEl) startInlineRename(labelEl, node);
+}
+
+function deleteNode(node) {
+  if (node.id === 'root') return;
+  if (!confirm('Delete "' + node.name + '"?')) return;
+  const parent = findParentOf(node.id, data, null);
+  parent.children = parent.children.filter(c => c.id !== node.id);
+  if (selected === node.id) {
+    selected = null;
+    currentFileNode = null;
+    document.getElementById('editorEmpty').style.display = 'flex';
+    document.getElementById('editorContent').style.display = 'none';
+    setPreview('none', null);
+  }
+  render();
+}
+
+function pasteNode(targetNode) {
+  if (!clipboard) return;
+  const targetFolder = targetNode.type === 'folder' ? targetNode : (findParentOf(targetNode.id, data, null) || data);
+  if (clipboard.mode === 'copy') {
+    const copy = deepClone(clipboard.node);
+    copy.name = uniqueName(targetFolder, copy.name);
+    targetFolder.children.push(copy);
+    targetFolder.open = true;
+  } else {
+    const srcParent = findParentOf(clipboard.node.id, data, null);
+    if (srcParent && srcParent.id !== targetFolder.id) {
+      srcParent.children = srcParent.children.filter(c => c.id !== clipboard.node.id);
+      clipboard.node.name = uniqueName(targetFolder, clipboard.node.name);
+      targetFolder.children.push(clipboard.node);
+      targetFolder.open = true;
+    }
+    clipboard = null;
+  }
+  render();
+}
+
+function moveNode(draggedId, targetFolderId) {
+  if (draggedId === targetFolderId) return;
+  const dragged = findNode(data, draggedId);
+  const targetFolder = findNode(data, targetFolderId);
+  if (!dragged || !targetFolder || targetFolder.type !== 'folder') return;
+  function isDesc(node, id) { if (node.id===id) return true; if (node.type==='folder') return node.children.some(c=>isDesc(c,id)); return false; }
+  if (dragged.type === 'folder' && isDesc(dragged, targetFolderId)) return;
+  const srcParent = findParentOf(draggedId, data, null);
+  if (!srcParent || srcParent.id === targetFolderId) return;
+  srcParent.children = srcParent.children.filter(c => c.id !== draggedId);
+  dragged.name = uniqueName(targetFolder, dragged.name);
+  targetFolder.children.push(dragged);
+  targetFolder.open = true;
+  render();
+}
+
+// ── ZIP ────────────────────────────────────────────────────────────────────────
+document.getElementById('exportZip').onclick = async () => {
+  const zip = new JSZip();
+  function addToZip(node, path) {
+    if (node.type === 'folder') {
+      const fp = path ? path + '/' + node.name : node.name;
+      if (!node.children.length) zip.folder(fp);
+      node.children.forEach(c => addToZip(c, fp));
+    } else {
+      const fp = path ? path + '/' + node.name : node.name;
+      if (node.kind === 'image') {
+        zip.file(fp, (node.content||'').split(',')[1]||'', {base64:true});
+      } else {
+        zip.file(fp, node.content || '');
+      }
+    }
+  }
+  data.children.forEach(c => addToZip(c, ''));
+  const blob = await zip.generateAsync({type:'blob'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = data.name + '.zip';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+
+document.getElementById('importZip').onclick = () => document.getElementById('fileInput').click();
+document.getElementById('fileInput').onchange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const zip = await JSZip.loadAsync(file);
+  const newRoot = {type:'folder', name:file.name.replace(/\.zip$/i,''), open:true, id:'root', children:[]};
+
+  function ef(root, parts) {
+    let cur = root;
+    for (const part of parts) {
+      if (!part) continue;
+      let ex = cur.children.find(c => c.type==='folder' && c.name===part);
+      if (!ex) { ex = {type:'folder', name:part, open:true, id:'n'+(idCounter++), children:[]}; cur.children.push(ex); }
+      cur = ex;
+    }
+    return cur;
+  }
+
+  const entries = Object.values(zip.files);
+  for (const entry of entries) {
+    const parts = entry.name.split('/').filter(p => p.length > 0);
+    if (entry.dir) { ef(newRoot, parts); }
+    else {
+      const fileName = parts.pop();
+      const folder = ef(newRoot, parts);
+      if (isImage(fileName)) {
+        const b64 = await entry.async('base64');
+        const ext = fileName.split('.').pop().toLowerCase();
+        const mime = ext==='jpg'?'jpeg':ext;
+        folder.children.push({type:'file', name:fileName, id:'n'+(idCounter++), kind:'image', content:'data:image/'+mime+';base64,'+b64});
+      } else {
+        let content = '';
+        try { content = await entry.async('string'); } catch(err) { content = ''; }
+        folder.children.push({type:'file', name:fileName, id:'n'+(idCounter++), kind:'text', content});
+      }
+    }
+  }
+
+  data = newRoot;
+  selected = null;
+  currentFileNode = null;
+  const defsFolder = data.children.find(c => c.type==='folder' && c.name==='Defs');
+  createTargetFolderId = defsFolder ? defsFolder.id : 'root';
+  document.getElementById('editorEmpty').style.display = 'flex';
+  document.getElementById('editorContent').style.display = 'none';
+  createContentMode = false;
+  setPreview('none', null);
+  render();
+  e.target.value = '';
+};
+
+// ── Toast ──────────────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  document.getElementById('appRoot').appendChild(t);
+  setTimeout(() => { t.classList.add('fade'); setTimeout(() => t.remove(), 450); }, 2000);
+}
+
+// ── Create Content ─────────────────────────────────────────────────────────────
+document.getElementById('createContentBtn').onclick = () => {
+  const opened = FloatManager.open('createContent', '+ Create Content', document.getElementById('createContentView'), { w: 680, h: 560, xOff: 20, yOff: -20 });
+  if (opened) {
+    createContentMode = true;
+    const targetNode = findNode(data, createTargetFolderId) || findNode(data, 'defs') || data;
+    createTargetFolderId = targetNode.id;
+    document.getElementById('ccTargetName').textContent = targetNode.name;
+    updateTemplateOptions();
+    refreshCC();
+    render();
+  } else {
+    createContentMode = false;
+    render();
+  }
+};
+
+document.getElementById('ccCancel').onclick = () => {
+  createContentMode = false;
+  FloatManager.close('createContent');
+  render();
+};
+
+document.getElementById('ccChooseFolder').onclick = () => {
+  const hint = document.getElementById('ccFolderHint');
+  hint.style.display = hint.style.display === 'none' ? 'block' : 'none';
+};
+
+document.getElementById('ccDefType').onchange = () => { updateTemplateOptions(); refreshCC(); };
+document.getElementById('ccTemplate').onchange = refreshCC;
+document.getElementById('ccName').oninput = refreshCC;
+document.getElementById('ccDefName').oninput = refreshCC;
+['ccRecipe','ccResearch','ccLocalization','ccTexture'].forEach(id => {
+  document.getElementById(id).onchange = refreshCC;
+});
+
+document.getElementById('ccDefName').onblur = () => {
+  const inp = document.getElementById('ccDefName');
+  const val = inp.value.trim();
+  if (val && !/^[A-Za-z][A-Za-z0-9_]*$/.test(val)) inp.classList.add('invalid');
+  else inp.classList.remove('invalid');
+};
+
+function updateTemplateOptions() {
+  const defType = document.getElementById('ccDefType').value;
+  const sel = document.getElementById('ccTemplate');
+  sel.innerHTML = '';
+  (TEMPLATES[defType] || []).forEach(t => {
+    const o = document.createElement('option'); o.value = t; o.textContent = t; sel.appendChild(o);
+  });
+  const showRecipe = defType === 'ThingDef';
+  const showResearch = defType !== 'ResearchProjectDef';
+  const showTexture = defType === 'ThingDef';
+  document.getElementById('lbl-recipe').style.display = showRecipe ? '' : 'none';
+  document.getElementById('lbl-research').style.display = showResearch ? '' : 'none';
+  document.getElementById('lbl-texture').style.display = showTexture ? '' : 'none';
+}
+
+function refreshCC() {
+  const name = document.getElementById('ccName').value || 'My Content';
+  const def = document.getElementById('ccDefName').value || 'MyContent';
+  const tpl = document.getElementById('ccTemplate').value || '';
+  const doRecipe = document.getElementById('ccRecipe').checked && document.getElementById('lbl-recipe').style.display !== 'none';
+  const doResearch = document.getElementById('ccResearch').checked && document.getElementById('lbl-research').style.display !== 'none';
+  const doLoc = document.getElementById('ccLocalization').checked;
+  const doTex = document.getElementById('ccTexture').checked && document.getElementById('lbl-texture').style.display !== 'none';
+
+  document.getElementById('ccTemplateInfo').textContent = TEMPLATE_INFO[tpl] || '—';
+
+  const targetNode = findNode(data, createTargetFolderId) || data;
+  const targetName = targetNode.name;
+  const files = [targetName + '/' + def + '.xml'];
+  if (doRecipe) files.push(targetName + '/' + def + '_Recipe.xml');
+  if (doResearch) files.push(targetName + '/' + def + '_Research.xml');
+  if (doLoc) files.push('Languages/English/Keyed/' + def + '_Labels.xml');
+  if (doTex) files.push('Textures/' + def + '/README.txt');
+  document.getElementById('ccFilesPreview').textContent = files.join('\n');
+  document.getElementById('ccXmlPreview').textContent = xmlTemplate(tpl, def, name) || '(No template selected)';
+}
+
+document.getElementById('ccGenerate').onclick = () => {
+  const name = document.getElementById('ccName').value.trim();
+  const def = document.getElementById('ccDefName').value.trim();
+  const tpl = document.getElementById('ccTemplate').value;
+
+  if (!name) { alert('Display Name is required.'); return; }
+  if (!def) { alert('DefName is required.'); return; }
+  if (!/^[A-Za-z][A-Za-z0-9_]*$/.test(def)) {
+    alert('DefName must start with a letter and contain only letters, numbers, and underscores.\nExample: MeleeWeapon_IronSword');
+    return;
+  }
+
+  const doRecipe = document.getElementById('ccRecipe').checked && document.getElementById('lbl-recipe').style.display !== 'none';
+  const doResearch = document.getElementById('ccResearch').checked && document.getElementById('lbl-research').style.display !== 'none';
+  const doLoc = document.getElementById('ccLocalization').checked;
+  const doTex = document.getElementById('ccTexture').checked && document.getElementById('lbl-texture').style.display !== 'none';
+
+  const targetFolder = findNode(data, createTargetFolderId) || findNode(data, 'defs') || data;
+  targetFolder.open = true;
+
+  const mainNode = {type:'file', name:uniqueName(targetFolder, def+'.xml'), id:'n'+(idCounter++), kind:'text', content:xmlTemplate(tpl, def, name)};
+  targetFolder.children.push(mainNode);
+
+  if (doRecipe) targetFolder.children.push({type:'file', name:uniqueName(targetFolder, def+'_Recipe.xml'), id:'n'+(idCounter++), kind:'text', content:recipeCompanionXml(def, name)});
+  if (doResearch) targetFolder.children.push({type:'file', name:uniqueName(targetFolder, def+'_Research.xml'), id:'n'+(idCounter++), kind:'text', content:researchCompanionXml(def, name)});
+  if (doLoc) {
+    const langFolder = ensurePath(['Languages','English','Keyed']);
+    langFolder.children.push({type:'file', name:uniqueName(langFolder, def+'_Labels.xml'), id:'n'+(idCounter++), kind:'text', content:localizationXml(def, name)});
+  }
+  if (doTex) {
+    const texBase = findNode(data, 'tex') || ensureFolder(data, 'Textures');
+    const defTexFolder = ensureFolder(texBase, def);
+    defTexFolder.children.push({type:'file', name:uniqueName(defTexFolder, 'README.txt'), id:'n'+(idCounter++), kind:'text', content:texturePlaceholder(def)});
+  }
+
+  createContentMode = false;
+  FloatManager.close('createContent');
+  selected = mainNode.id;
+  render();
+  openFile(mainNode);
+  showToast('Generated ' + def + '.xml' + (doRecipe||doResearch||doLoc||doTex ? ' + companions' : ''));
+};
+
+// ── Resize ─────────────────────────────────────────────────────────────────────
+const hHandle = document.getElementById('hDragHandle');
+const sidebar = document.getElementById('sidebar');
+let hDragging = false, hStartX = 0, hStartW = 0;
+
+hHandle.addEventListener('mousedown', (e) => {
+  hDragging = true; hStartX = e.clientX; hStartW = sidebar.offsetWidth;
+  hHandle.classList.add('active');
+  document.getElementById('appRoot').classList.add('resizing');
+  document.body.style.userSelect = 'none';
+});
+document.addEventListener('mousemove', (e) => {
+  if (!hDragging) return;
+  sidebar.style.width = Math.min(600, Math.max(160, hStartW + (e.clientX - hStartX))) + 'px';
+});
+document.addEventListener('mouseup', () => {
+  if (hDragging) { hDragging = false; hHandle.classList.remove('active'); document.getElementById('appRoot').classList.remove('resizing'); document.body.style.userSelect = ''; }
+});
+
+const vHandle = document.getElementById('vDragHandle');
+const previewSection = document.getElementById('previewSection');
+let vDragging = false, vStartY = 0, vStartH = 0;
+
+vHandle.addEventListener('mousedown', (e) => {
+  vDragging = true; vStartY = e.clientY; vStartH = previewSection.offsetHeight;
+  vHandle.classList.add('active');
+  document.getElementById('appRoot').classList.add('resizing-row');
+  document.body.style.userSelect = 'none';
+});
+document.addEventListener('mousemove', (e) => {
+  if (!vDragging) return;
+  const delta = vStartY - e.clientY;
+  previewSection.style.height = Math.min(400, Math.max(60, vStartH + delta)) + 'px';
+});
+document.addEventListener('mouseup', () => {
+  if (vDragging) { vDragging = false; vHandle.classList.remove('active'); document.getElementById('appRoot').classList.remove('resizing-row'); document.body.style.userSelect = ''; }
+});
+
+// ── Init ───────────────────────────────────────────────────────────────────────
+updateTemplateOptions();
+render();
+setPreview('none', null);
+
+// ── Float Panel Manager ────────────────────────────────────────────────────────
+const FloatManager = (function() {
+  let zTop = 200;
+  const panels = new Map(); // id → { panel, contentEl }
+
+  function bringToFront(panel) {
+    zTop++;
+    panel.style.zIndex = zTop;
+  }
+
+  function makeDraggable(panel, bar) {
+    let ox, oy, dragging = false;
+    bar.addEventListener('mousedown', e => {
+      if (e.target.closest('button')) return;
+      dragging = true; ox = e.clientX - panel.offsetLeft; oy = e.clientY - panel.offsetTop;
+      bringToFront(panel);
+      document.body.style.userSelect = 'none';
+      e.preventDefault();
+    });
+    document.addEventListener('mousemove', e => {
+      if (!dragging) return;
+      const root = document.getElementById('appRoot');
+      const rb = root.getBoundingClientRect();
+      const x = Math.max(0, Math.min(e.clientX - ox, rb.width - 60));
+      const y = Math.max(0, Math.min(e.clientY - oy, rb.height - 40));
+      panel.style.left = x + 'px'; panel.style.top = y + 'px';
+    });
+    document.addEventListener('mouseup', () => { dragging = false; document.body.style.userSelect = ''; });
+  }
+
+  function makeResizable(panel) {
+    const handles = [
+      { cls:'fp-rh-r',  onMove:(e,sx,sy,sw,sh,slx,sly) => { panel.style.width = Math.max(280, sw + e.clientX - sx) + 'px'; } },
+      { cls:'fp-rh-b',  onMove:(e,sx,sy,sw,sh,slx,sly) => { panel.style.height = Math.max(180, sh + e.clientY - sy) + 'px'; } },
+      { cls:'fp-rh-br', onMove:(e,sx,sy,sw,sh,slx,sly) => { panel.style.width = Math.max(280, sw + e.clientX - sx) + 'px'; panel.style.height = Math.max(180, sh + e.clientY - sy) + 'px'; } },
+      { cls:'fp-rh-bl', onMove:(e,sx,sy,sw,sh,slx,sly) => {
+        const nw = Math.max(280, sw - e.clientX + sx);
+        panel.style.width = nw + 'px';
+        panel.style.left = Math.max(0, slx + sw - nw) + 'px';
+        panel.style.height = Math.max(180, sh + e.clientY - sy) + 'px';
+      }},
+    ];
+    handles.forEach(({ cls, onMove }) => {
+      const h = document.createElement('div'); h.className = cls;
+      let active = false, sx, sy, sw, sh, slx, sly;
+      h.addEventListener('mousedown', e => {
+        active = true; sx = e.clientX; sy = e.clientY;
+        sw = panel.offsetWidth; sh = panel.offsetHeight;
+        slx = panel.offsetLeft; sly = panel.offsetTop;
+        bringToFront(panel);
+        document.body.style.userSelect = 'none';
+        e.stopPropagation(); e.preventDefault();
+      });
+      document.addEventListener('mousemove', e => { if (active) onMove(e, sx, sy, sw, sh, slx, sly); });
+      document.addEventListener('mouseup', () => { active = false; document.body.style.userSelect = ''; });
+      panel.appendChild(h);
+    });
+  }
+
+  return {
+    open(id, title, contentEl, { w = 780, h = 520, xOff = 0, yOff = 0 } = {}) {
+      const root = document.getElementById('appRoot');
+      const rb = root.getBoundingClientRect();
+      // Toggle: if already open, close it
+      if (panels.has(id)) { const e = panels.get(id); e.contentEl.style.display='none'; document.body.appendChild(e.contentEl); e.panel.remove(); panels.delete(id); return false; }
+
+      // Default position: offset from center with staggering
+      const openCount = panels.size;
+      const x = Math.min(rb.width - w - 10, Math.max(0, (rb.width - w) / 2 + xOff + openCount * 24));
+      const y = Math.min(rb.height - h - 10, Math.max(0, (rb.height - h) / 2 + yOff + openCount * 24));
+
+      const panel = document.createElement('div');
+      panel.className = 'fp';
+      panel.style.cssText = `left:${x}px;top:${y}px;width:${w}px;height:${h}px;`;
+      panel.addEventListener('mousedown', () => bringToFront(panel));
+
+      const bar = document.createElement('div'); bar.className = 'fp-bar';
+      const titleEl = document.createElement('span'); titleEl.className = 'fp-title'; titleEl.textContent = title;
+      const maxBtn = document.createElement('button'); maxBtn.className = 'fp-btn'; maxBtn.textContent = '⤢'; maxBtn.title = 'Maximize';
+      maxBtn.onclick = () => {
+        const mx = panel.classList.toggle('fp-maximized');
+        maxBtn.textContent = mx ? '⤡' : '⤢';
+      };
+      const closeBtn = document.createElement('button'); closeBtn.className = 'fp-btn close'; closeBtn.textContent = '✕';
+      closeBtn.onclick = () => { contentEl.style.display = 'none'; document.body.appendChild(contentEl); panel.remove(); panels.delete(id); };
+      bar.appendChild(titleEl); bar.appendChild(maxBtn); bar.appendChild(closeBtn);
+
+      const body = document.createElement('div'); body.className = 'fp-body';
+      contentEl.style.display = 'flex';
+      body.appendChild(contentEl);
+
+      panel.appendChild(bar); panel.appendChild(body);
+      makeResizable(panel);
+      makeDraggable(panel, bar);
+      bringToFront(panel);
+
+      root.appendChild(panel);
+      panels.set(id, { panel, contentEl });
+      return true;
+    },
+    close(id) {
+      if (panels.has(id)) {
+        const { panel, contentEl } = panels.get(id);
+        contentEl.style.display = 'none';
+        document.body.appendChild(contentEl);
+        panel.remove();
+        panels.delete(id);
+      }
+    },
+    isOpen(id) { return panels.has(id); },
+    focus(id) { if (panels.has(id)) bringToFront(panels.get(id).panel); }
+  };
+})();
+
+// ── Core Defs Browser ──────────────────────────────────────────────────────────
+(function() {
+  let coreIndex = null;
+  let activeCat = null;
+  let activeDef = null;
+
+  document.getElementById('coreDefsBtn').onclick = () => {
+    FloatManager.open('core', '⊞ Core Defs Browser', document.getElementById('coreDefsContent'), { w: 920, h: 560, xOff: -60 });
+  };
+
+  document.getElementById('coreDefsLoadBtn').onclick = () =>
+    document.getElementById('coreDefsFileInput').click();
+
+  document.getElementById('coreDefsFileInput').onchange = async function() {
+    const file = this.files[0];
+    if (!file) return;
+    document.getElementById('coreDefsLoadBtn').textContent = 'Loading…';
+    document.getElementById('coreDefsLoadBtn').disabled = true;
+    try {
+      const zip = await JSZip.loadAsync(file);
+      const index = { categories: [], defs: {} };
+      const xmlFiles = [];
+      zip.forEach((path, entry) => {
+        if (!entry.dir && path.toLowerCase().endsWith('.xml')) xmlFiles.push(entry);
+      });
+      for (const entry of xmlFiles) {
+        const text = await entry.async('text');
+        // Derive category from path
+        const parts = entry.name.replace(/\\/g, '/').split('/');
+        // Find 'Defs' folder in path if present
+        const defsIdx = parts.findIndex(p => p.toLowerCase() === 'defs');
+        const catParts = defsIdx >= 0 ? parts.slice(defsIdx + 1, -1) : parts.slice(0, -1);
+        const cat = catParts.join('/') || 'Root';
+        try {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(text, 'text/xml');
+          if (doc.documentElement.nodeName === 'parsererror') continue;
+          for (const child of [...doc.documentElement.children]) {
+            const dn = child.querySelector(':scope > defName');
+            if (!dn) continue;
+            const labelEl = child.querySelector(':scope > label');
+            if (!index.defs[cat]) { index.defs[cat] = []; index.categories.push(cat); }
+            index.defs[cat].push({
+              defName: dn.textContent.trim(),
+              tag: child.tagName,
+              label: labelEl ? labelEl.textContent.trim() : dn.textContent.trim(),
+              xml: child.outerHTML
+            });
+          }
+        } catch(e) {}
+      }
+      index.categories.sort();
+      coreIndex = index;
+      document.getElementById('coreDefsLoadPrompt').style.display = 'none';
+      const bp = document.getElementById('coreDefsBrowserPanel');
+      bp.style.cssText = 'display:flex;flex:1;min-height:0;flex-direction:row;width:100%;';
+      renderCats('');
+    } catch(e) {
+      alert('Failed to load zip: ' + e.message);
+    } finally {
+      document.getElementById('coreDefsLoadBtn').textContent = '📦 Load Defs.zip';
+      document.getElementById('coreDefsLoadBtn').disabled = false;
+    }
+  };
+
+  function prettyXmlStr(xmlStr) {
+    try {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString('<root>' + xmlStr + '</root>', 'text/xml');
+      if (doc.documentElement.nodeName === 'parsererror') return xmlStr;
+      const el = doc.documentElement.firstElementChild;
+      if (!el) return xmlStr;
+      return formatNode(el, 0);
+    } catch(e) { return xmlStr; }
+  }
+
+  function formatNode(node, depth) {
+    const pad = '  '.repeat(depth);
+    const tag = node.tagName;
+    const attrs = [...node.attributes].map(a => ` ${a.name}="${a.value}"`).join('');
+    const children = [...node.childNodes];
+    const hasElement = children.some(c => c.nodeType === 1);
+    if (!hasElement) {
+      const text = node.textContent;
+      if (!text.trim()) return `${pad}<${tag}${attrs} />`;
+      return `${pad}<${tag}${attrs}>${text}</${tag}>`;
+    }
+    const inner = children.map(c => {
+      if (c.nodeType === 1) return '\n' + formatNode(c, depth + 1);
+      if (c.nodeType === 3 && c.textContent.trim()) return c.textContent.trim();
+      return '';
+    }).join('');
+    return `${pad}<${tag}${attrs}>${inner}\n${pad}</${tag}>`;
+  }
+
+  function renderCats(filter) {
+    const list = document.getElementById('coreDefsCatList');
+    list.innerHTML = '';
+    if (!coreIndex) return;
+    const lf = filter.toLowerCase();
+    coreIndex.categories.forEach(cat => {
+      if (lf && !cat.toLowerCase().includes(lf)) return;
+      const div = document.createElement('div');
+      div.className = 'cd-cat' + (cat === activeCat ? ' active' : '');
+      const nameSpan = document.createElement('span');
+      nameSpan.textContent = cat.split('/').pop();
+      nameSpan.title = cat;
+      const cntSpan = document.createElement('span');
+      cntSpan.className = 'cd-cat-count';
+      cntSpan.textContent = coreIndex.defs[cat].length;
+      div.appendChild(nameSpan); div.appendChild(cntSpan);
+      div.onclick = () => { activeCat = cat; activeDef = null; renderCats(filter); renderDefs(''); };
+      list.appendChild(div);
+    });
+  }
+
+  function renderDefs(filter) {
+    const list = document.getElementById('coreDefsListItems');
+    list.innerHTML = '';
+    if (!coreIndex || !activeCat) return;
+    const lf = filter.toLowerCase();
+    const defs = coreIndex.defs[activeCat] || [];
+    defs.forEach(d => {
+      if (lf && !d.defName.toLowerCase().includes(lf) && !d.label.toLowerCase().includes(lf)) return;
+      const div = document.createElement('div');
+      div.className = 'cd-def-item' + (d === activeDef ? ' active' : '');
+      const name = document.createElement('div'); name.className = 'cd-def-name'; name.textContent = d.label !== d.defName ? d.label : d.defName;
+      const tag = document.createElement('div'); tag.className = 'cd-def-tag'; tag.textContent = d.defName + (d.label !== d.defName ? ' · ' + d.tag : ' · ' + d.tag);
+      div.appendChild(name); div.appendChild(tag);
+      div.onclick = () => { activeDef = d; renderDefs(filter); renderPreview(d); };
+      list.appendChild(div);
+    });
+  }
+
+  function renderPreview(d) {
+    const nameEl = document.getElementById('coreDefsPreviewName');
+    const xmlEl = document.getElementById('coreDefsPreviewXml');
+    const copyBtn = document.getElementById('coreDefsCopyBtn');
+    nameEl.textContent = d.label + (d.label !== d.defName ? ' (' + d.defName + ')' : '');
+    xmlEl.textContent = prettyXmlStr(d.xml);
+    copyBtn.classList.add('ready');
+  }
+
+  document.getElementById('coreDefsSearch').oninput = function() { renderCats(this.value); };
+  document.getElementById('coreDefsListSearch').oninput = function() { renderDefs(this.value); };
+
+  document.getElementById('coreDefsCopyBtn').onclick = () => {
+    if (!activeDef) return;
+    // Find defs folder node
+    function findDefsFolder(nodes) {
+      for (const n of nodes) {
+        if (n.type === 'folder' && n.name.toLowerCase() === 'defs') return n;
+        if (n.type === 'folder' && n.children) { const r = findDefsFolder(n.children); if (r) return r; }
+      }
+      return null;
+    }
+    const defsFolder = findDefsFolder(data.children) || data;
+    const safeName = activeDef.defName.replace(/[^A-Za-z0-9_]/g, '_');
+    const newName = safeName + '.xml';
+    // Check if already exists
+    const exists = (defsFolder.children || []).find(n => n.name === newName);
+    if (exists) { alert(`${newName} already exists in your Defs folder.`); return; }
+    if (!defsFolder.children) defsFolder.children = [];
+    const xmlContent = '<?xml version="1.0" encoding="utf-8" ?>\n<Defs>\n' + prettyXmlStr(activeDef.xml).split('\n').map(l => '  ' + l).join('\n') + '\n</Defs>';
+    const newNode = { type:'file', id:'f_' + Date.now(), name: newName, kind:'text', content: xmlContent };
+    defsFolder.children.push(newNode);
+    if (!defsFolder.open) defsFolder.open = true;
+    render();
+    openFile(newNode);
+  };
+})();
+
+// ── Research Tree Visualizer ───────────────────────────────────────────────────
+(function() {
+  const TECH_COLOR = {
+    Neolithic:'#7a6a3a', Medieval:'#8a5a3a', Industrial:'#3a6a8a',
+    Spacer:'#3a4a8a', Ultra:'#6a3a8a', Archotech:'#8a3a6a'
+  };
+  const TECH_ORDER = ['Neolithic','Medieval','Industrial','Spacer','Ultra','Archotech'];
+
+  document.getElementById('researchTreeBtn').onclick = () => {
+    const opened = FloatManager.open('research', '⬡ Research Tree', document.getElementById('researchTreeContent'), { w: 820, h: 480, xOff: 40, yOff: 30 });
+    if (opened) buildTree();
+  };
+
+  function collectResearchDefs() {
+    const defs = [];
+    function walk(nodes) {
+      for (const n of nodes) {
+        if (n.type === 'folder') { walk(n.children || []); continue; }
+        if (!isXml(n.name) || !n.content) continue;
+        try {
+          const doc = new DOMParser().parseFromString(n.content, 'text/xml');
+          for (const el of [...doc.querySelectorAll('ResearchProjectDef')]) {
+            const g = t => { const e = el.querySelector(':scope > ' + t); return e ? e.textContent.trim() : ''; };
+            const prereqs = [...el.querySelectorAll('prerequisites > li')].map(e => e.textContent.trim());
+            defs.push({ defName: g('defName'), label: g('label') || g('defName'), tech: g('techLevel') || 'Industrial', cost: g('baseCost') || '?', prereqs, fileId: n.id });
+          }
+        } catch(e) {}
+      }
+    }
+    walk(data.children || []);
+    return defs;
+  }
+
+  function buildTree() {
+    const defs = collectResearchDefs();
+    const svg = document.getElementById('researchTreeSvg');
+    const tooltip = document.getElementById('researchTreeTooltip');
+    svg.innerHTML = '';
+
+    if (!defs.length) {
+      svg.innerHTML = '<text x="40" y="60" fill="#3d4658" font-size="14" font-family="sans-serif">No ResearchProjectDefs found in your mod files.</text>';
+      svg.setAttribute('width', 600); svg.setAttribute('height', 100);
+      return;
+    }
+
+    // Layout: group by tech level columns
+    const byTech = {};
+    TECH_ORDER.forEach(t => byTech[t] = []);
+    defs.forEach(d => { const t = byTech[d.tech] ? d.tech : 'Industrial'; byTech[t].push(d); });
+
+    const NODE_W = 160, NODE_H = 52, COL_GAP = 60, ROW_GAP = 20, PAD = 30;
+    const positions = {};
+    let x = PAD;
+    const usedCols = TECH_ORDER.filter(t => byTech[t].length > 0);
+
+    usedCols.forEach(tech => {
+      const col = byTech[tech];
+      col.forEach((d, i) => {
+        positions[d.defName] = { x, y: PAD + i * (NODE_H + ROW_GAP), d };
+      });
+      x += NODE_W + COL_GAP;
+    });
+
+    const totalW = x - COL_GAP + PAD;
+    const maxRows = Math.max(...usedCols.map(t => byTech[t].length));
+    const totalH = PAD + maxRows * (NODE_H + ROW_GAP) + PAD + 30;
+    svg.setAttribute('width', totalW);
+    svg.setAttribute('height', totalH);
+
+    // Draw column headers
+    let hx = PAD;
+    usedCols.forEach(tech => {
+      const col = byTech[tech];
+      const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+      t.setAttribute('x', hx + NODE_W/2);
+      t.setAttribute('y', totalH - 10);
+      t.setAttribute('text-anchor','middle');
+      t.setAttribute('fill', TECH_COLOR[tech] || '#6b7a96');
+      t.setAttribute('font-size','11');
+      t.setAttribute('font-family','sans-serif');
+      t.setAttribute('font-weight','600');
+      t.textContent = tech.toUpperCase();
+      svg.appendChild(t);
+      // Column bg
+      const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+      rect.setAttribute('x', hx - 8);
+      rect.setAttribute('y', PAD - 8);
+      rect.setAttribute('width', NODE_W + 16);
+      rect.setAttribute('height', totalH - PAD - 20);
+      rect.setAttribute('rx', 6);
+      rect.setAttribute('fill', 'rgba(255,255,255,0.02)');
+      rect.setAttribute('stroke', '#1e2535');
+      rect.setAttribute('stroke-width','1');
+      svg.insertBefore(rect, svg.firstChild);
+      hx += NODE_W + COL_GAP;
+    });
+
+    // Draw edges first
+    defs.forEach(d => {
+      d.prereqs.forEach(pre => {
+        const from = positions[pre];
+        const to = positions[d.defName];
+        if (!from || !to) return;
+        const x1 = from.x + NODE_W, y1 = from.y + NODE_H/2;
+        const x2 = to.x, y2 = to.y + NODE_H/2;
+        const mx = (x1 + x2) / 2;
+        const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+        path.setAttribute('d', `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}`);
+        path.setAttribute('fill','none');
+        path.setAttribute('stroke','#2a3a5e');
+        path.setAttribute('stroke-width','1.5');
+        path.setAttribute('marker-end','url(#arrow)');
+        svg.appendChild(path);
+      });
+    });
+
+    // Arrow marker
+    const defs_el = document.createElementNS('http://www.w3.org/2000/svg','defs');
+    defs_el.innerHTML = `<marker id="arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#4a80d4" opacity="0.6"/></marker>`;
+    svg.insertBefore(defs_el, svg.firstChild);
+
+    // Draw nodes
+    defs.forEach(d => {
+      const pos = positions[d.defName];
+      if (!pos) return;
+      const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+      g.setAttribute('class','rt-node');
+      g.setAttribute('transform',`translate(${pos.x},${pos.y})`);
+
+      const col = TECH_COLOR[d.tech] || '#3a4a6a';
+      const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+      rect.setAttribute('width', NODE_W); rect.setAttribute('height', NODE_H);
+      rect.setAttribute('rx',6);
+      rect.setAttribute('fill','#1a1f2c');
+      rect.setAttribute('stroke', col);
+      rect.setAttribute('stroke-width','1.5');
+      g.appendChild(rect);
+
+      // Label
+      const lbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+      lbl.setAttribute('x', NODE_W/2); lbl.setAttribute('y', 20);
+      lbl.setAttribute('text-anchor','middle');
+      lbl.setAttribute('fill','#cfd6e4');
+      lbl.setAttribute('font-size','12');
+      lbl.setAttribute('font-family','sans-serif');
+      lbl.setAttribute('font-weight','600');
+      lbl.textContent = d.label.length > 18 ? d.label.slice(0,17) + '…' : d.label;
+      g.appendChild(lbl);
+
+      // Cost
+      const cost = document.createElementNS('http://www.w3.org/2000/svg','text');
+      cost.setAttribute('x', NODE_W/2); cost.setAttribute('y', 36);
+      cost.setAttribute('text-anchor','middle');
+      cost.setAttribute('fill', col);
+      cost.setAttribute('font-size','10');
+      cost.setAttribute('font-family','sans-serif');
+      cost.textContent = d.cost !== '?' ? d.cost + ' pts' : '';
+      g.appendChild(cost);
+
+      g.addEventListener('mouseenter', (e) => {
+        rect.setAttribute('stroke-width','2.5');
+        tooltip.style.display = 'block';
+        tooltip.innerHTML = `<strong>${d.label}</strong><br><span style="color:#6b7a96">${d.defName}</span><br>Tech: ${d.tech} · Cost: ${d.cost}<br>${d.prereqs.length ? 'Prereqs: ' + d.prereqs.join(', ') : 'No prerequisites'}`;
+      });
+      g.addEventListener('mousemove', (e) => {
+        tooltip.style.left = (e.clientX + 14) + 'px';
+        tooltip.style.top = (e.clientY - 10) + 'px';
+      });
+      g.addEventListener('mouseleave', () => {
+        rect.setAttribute('stroke-width','1.5');
+        tooltip.style.display = 'none';
+      });
+      g.addEventListener('click', () => {
+        // Find and open the file containing this def
+        function findFile(nodes) {
+          for (const n of nodes) {
+            if (n.type === 'folder') { const r = findFile(n.children||[]); if(r) return r; }
+            if (n.id === d.fileId) return n;
+          }
+          return null;
+        }
+        const file = findFile(data.children||[]);
+        if (file) { selected = file.id; openFile(file); render(); }
+      });
+
+      svg.appendChild(g);
+    });
+  }
+})();
+
+// ── Title bar mod name sync ────────────────────────────────────────────────────
+(function() {
+  function syncTitle() {
+    function findAbout(nodes) {
+      for (const n of nodes) {
+        if (n.type === 'folder') { const r = findAbout(n.children||[]); if(r) return r; }
+        if (n.type === 'file' && n.name.toLowerCase() === 'about.xml' && n.content) return n;
+      }
+      return null;
+    }
+    const ab = findAbout(data.children||[]);
+    if (ab) {
+      const m = ab.content.match(/<name>([^<]+)<\/name>/i);
+      if (m) document.getElementById('titleModName').textContent = m[1].trim();
+    }
+  }
+  setInterval(syncTitle, 2000);
+  syncTitle();
+})();
+
+})();
+</script>
+</body>
+</html>
