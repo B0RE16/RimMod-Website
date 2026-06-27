@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hex Conquest</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;background:#07090f;color:#c0cce0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;overflow:hidden;user-select:none}
+#wrap{display:flex;flex-direction:column;width:100vw;height:100vh}
+#topbar{display:flex;align-items:center;gap:10px;padding:0 14px;height:42px;background:#0b0f1c;border-bottom:1px solid #1a2438;flex-shrink:0}
+#logo{font-size:15px;font-weight:800;color:#d4b840;letter-spacing:.12em}
+.res{display:flex;align-items:center;gap:6px;background:#131b2c;border:1px solid #223;border-radius:5px;padding:3px 10px;font-size:12px}
+.res .lbl{color:#607080;font-size:10px;text-transform:uppercase;letter-spacing:.05em}
+.res .val{color:#e8cc50;font-weight:700}
+#turnlbl{font-size:11px;color:#506070;margin-left:4px}
+#factionlbl{font-size:11px;font-weight:700;padding:3px 10px;border-radius:4px}
+#endturn{margin-left:auto;padding:5px 16px;background:#1a3a1a;border:1px solid #2d6030;color:#60c060;border-radius:5px;font-size:12px;font-weight:700;cursor:pointer;transition:all .12s}
+#endturn:hover{background:#245a24;color:#80e080}
+#endturn:disabled{opacity:.35;cursor:default}
+#main{display:flex;flex:1;min-height:0}
+#mapwrap{flex:1;position:relative;overflow:hidden;background:#07090f;cursor:crosshair}
+#gc{position:absolute;top:0;left:0}
+#panel{width:210px;flex-shrink:0;background:#0b0f1c;border-left:1px solid #1a2438;display:flex;flex-direction:column;overflow:hidden}
+.psec{border-bottom:1px solid #141e30;padding:9px 11px}
+.phdr{font-size:9px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#3a5070;margin-bottom:7px}
+#selinfo{font-size:11px;line-height:1.75;color:#8098b0}
+#actionsec{display:none}
+#trainsec{display:none}
+#trainlist{display:flex;flex-direction:column;gap:4px}
+.abtn{display:block;width:100%;padding:5px 9px;background:#111c2e;border:1px solid #1e2e48;color:#90a8c8;border-radius:4px;font-size:11px;cursor:pointer;text-align:left;transition:all .12s}
+.abtn:hover{background:#1a2e4a;color:#c0d8f0}
+.abtn.on{background:#152a52;border-color:#3060a0;color:#70b0f0}
+.abtn:disabled{opacity:.35;cursor:default}
+.titem{display:flex;align-items:center;gap:7px;padding:5px 7px;background:#0e1624;border:1px solid #1a2438;border-radius:4px;cursor:pointer;transition:all .12s;font-size:11px}
+.titem:hover{background:#141e30;border-color:#304870}
+.titem.cant{opacity:.38;cursor:default;pointer-events:none}
+.titem .tn{flex:1;color:#b0c8e0}
+.titem .tc{color:#e8c030;font-size:10px}
+#logwrap{flex:1;overflow-y:auto;padding:7px 10px;font-size:10.5px;line-height:1.65;color:#506070}
+.le{border-bottom:1px solid #0f1624;padding:2px 0}
+.lp{color:#5090d0}.la{color:#c04040}.le2{color:#70b050}.lw{color:#d0a030}
+#mmwrap{height:110px;flex-shrink:0;border-top:1px solid #141e30;background:#050810;position:relative}
+#mc{display:block;margin:0 auto}
+#ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);align-items:center;justify-content:center;z-index:200;flex-direction:column;gap:14px}
+#ov.show{display:flex}
+#ovtitle{font-size:34px;font-weight:800}
+#ovmsg{font-size:14px;color:#7090a8}
+#ovbtn{padding:9px 28px;background:#1e3a6a;border:1px solid #3a70c0;color:#70b0f0;border-radius:7px;font-size:14px;font-weight:700;cursor:pointer}
+#ovbtn:hover{background:#2a4a7a}
+#tip{position:fixed;background:#111e30;border:1px solid #1e3050;border-radius:5px;padding:7px 10px;font-size:10.5px;color:#b0c8e0;pointer-events:none;display:none;z-index:100;max-width:170px;line-height:1.55}
+#helptxt{position:absolute;bottom:8px;left:8px;font-size:10px;color:#2a3a50;pointer-events:none;line-height:1.6}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="topbar">
+    <span id="logo">⬡ HEX CONQUEST</span>
+    <div class="res"><span class="lbl">Gold</span><span class="val" id="goldv">150</span></div>
+    <div class="res"><span class="lbl">Cities</span><span class="val" id="citiesv">3</span></div>
+    <div class="res"><span class="lbl">Units</span><span class="val" id="unitsv">3</span></div>
+    <span id="turnlbl">Turn 1</span>
+    <span id="factionlbl">YOUR TURN</span>
+    <button id="endturn">End Turn →</button>
+  </div>
+  <div id="main">
+    <div id="mapwrap">
+      <canvas id="gc"></canvas>
+      <div id="helptxt">Left-click: select/move/attack &nbsp;|&nbsp; Right-click: deselect &nbsp;|&nbsp; Scroll: zoom &nbsp;|&nbsp; Middle-drag: pan</div>
+    </div>
+    <div id="panel">
+      <div class="psec">
+        <div class="phdr">Selected</div>
+        <div id="selinfo">Click a unit or your city.</div>
+      </div>
+      <div class="psec" id="actionsec">
+        <div class="phdr">Actions</div>
+        <div id="unitacts"></div>
+      </div>
+      <div class="psec" id="trainsec">
+        <div class="phdr">Train Unit</div>
+        <div id="trainlist"></div>
+      </div>
+      <div class="phdr" style="padding:9px 11px 3px">Log</div>
+      <div id="logwrap"></div>
+      <div id="mmwrap"><canvas id="mc"></canvas></div>
+    </div>
+  </div>
+</div>
+<div id="ov">
+  <div id="ovtitle"></div>
+  <div id="ovmsg"></div>
+  <button id="ovbtn">Play Again</button>
+</div>
+<div id="tip"></div>
+
+<script>
+// ── Hex math ──────────────────────────────────────────────────────────────────
+const S3=Math.sqrt(3);
+function h2p(q,r,sz){return{x:sz*(S3*q+S3/2*r),y:sz*(1.5*r)}}
+function p2h(x,y,sz){const q=(S3/3*x-y/3)/sz,r=(2/3*y)/sz;return hround(q,r)}
+function hround(q,r){let s=-q-r,rq=Math.round(q),rr=Math.round(r),rs=Math.round(s);const dq=Math.abs(rq-q),dr=Math.abs(rr-r),ds=Math.abs(rs-s);if(dq>dr&&dq>ds)rq=-rr-rs;else if(dr>ds)rr=-rq-rs;return{q:rq,r:rr}}
+function hkey(q,r){return q+','+r}
+function hdist(q1,r1,q2,r2){return(Math.abs(q1-q2)+Math.abs(q1+r1-q2-r2)+Math.abs(r1-r2))/2}
+function hnbrs(q,r){return[{q:q+1,r:r-1},{q:q+1,r:r},{q:q,r:r+1},{q:q-1,r:r+1},{q:q-1,r:r},{q:q,r:r-1}]}
+function hinradius(q,r,rad){const out=[];for(let dq=-rad;dq<=rad;dq++)for(let dr=Math.max(-rad,-dq-rad);dr<=Math.min(rad,-dq+rad);dr++)out.push({q:q+dq,r:r+dr});return out}
+function hline(q1,r1,q2,r2){const n=hdist(q1,r1,q2,r2);if(!n)return[{q:q1,r:r1}];const o=[];for(let i=0;i<=n;i++){const t=i/n;o.push(hround(q1+(q2-q1)*t,r1+(r2-r1)*t))}return o}
+function hcorners(cx,cy,sz){const p=[];for(let i=0;i<6;i++){const a=Math.PI/180*(60*i-30);p.push({x:cx+sz*Math.cos(a),y:cy+sz*Math.sin(a)})}return p}
+
+// ── Constants ─────────────────────────────────────────────────────────────────
+const PL=0,AI=1;
+const TCOLS={PLAINS:'#2e5828',FOREST:'#1a4018',MOUNTAIN:'#6a5a48',WATER:'#1a3a6a',DESERT:'#7a6030',CITY:'#6a5010'};
+const TMOVE={PLAINS:1,FOREST:2,MOUNTAIN:3,WATER:99,DESERT:2,CITY:1};
+const TDEF={PLAINS:0,FOREST:1,MOUNTAIN:2,WATER:0,DESERT:0,CITY:1};
+const TIMP={WATER:true};
+const TNOCAV={MOUNTAIN:true};
+const TGOLD=15;
+const UDEFS={
+  WARRIOR:{name:'Warrior',sym:'W',hp:24,atk:8,def:2,mv:3,rng:1,cost:60,col:'#5090f0'},
+  ARCHER: {name:'Archer', sym:'A',hp:16,atk:7,def:1,mv:2,rng:2,cost:75,col:'#80c840'},
+  CAVALRY:{name:'Cavalry',sym:'C',hp:20,atk:10,def:1,mv:5,rng:1,cost:90,col:'#f0a030',noCav:true},
+};
+const FNAMES=['Player','Enemy'];
+const FCOLS=['#4090e8','#e04848'];
+const MAP_R=9;
+
+// ── Hex & Unit classes ────────────────────────────────────────────────────────
+class Hex{
+  constructor(q,r,t){this.q=q;this.r=r;this.t=t;this.unit=null;this.owner=null;this.vis=[false,false];this.seen=[false,false]}
+  get key(){return hkey(this.q,this.r)}
+}
+class Unit{
+  constructor(type,fac,q,r){
+    this.id=Math.random().toString(36).slice(2);
+    this.type=type;this.fac=fac;this.q=q;this.r=r;
+    const d=UDEFS[type];
+    this.maxhp=d.hp;this.hp=d.hp;this.atk=d.atk;this.def=d.def;
+    this.mv=d.mv;this.rng=d.rng;this.mpleft=d.mv;this.canAtk=true;
+  }
+  get def_(){return UDEFS[this.type]}
+  get alive(){return this.hp>0}
+  reset(){this.mpleft=UDEFS[this.type].mv;this.canAtk=true}
+}
+
+// ── Game state ────────────────────────────────────────────────────────────────
+class Game{
+  constructor(){
+    this.map=new Map();this.units=[];
+    this.gold=[150,150];this.turn=1;
+    this.fac=PL;this.over=false;this.winner=null;
+    this.sel=null;this.selHex=null;
+    this.reach=new Set();this.attkbl=new Set();
+    this.phase='sel';
+    this._gen();this._place();this._vis();
+  }
+  hex(q,r){return this.map.get(hkey(q,r))}
+
+  _gen(){
+    const noise=(q,r)=>(Math.sin(q*.73+r*.41)*Math.cos(r*.59-q*.31)*.5+.5);
+    for(let q=-MAP_R;q<=MAP_R;q++)
+      for(let r=Math.max(-MAP_R,-q-MAP_R);r<=Math.min(MAP_R,-q+MAP_R);r++){
+        const n=noise(q,r),d=hdist(q,r,0,0)/MAP_R;
+        let t;
+        if(d>.88||n<.12)t='WATER';
+        else if(n<.28)t='DESERT';
+        else if(n<.52)t='PLAINS';
+        else if(n<.70)t='FOREST';
+        else t='MOUNTAIN';
+        this.map.set(hkey(q,r),new Hex(q,r,t));
+      }
+    // clear center corridor
+    hline(-MAP_R+1,0,MAP_R-1,0).forEach(({q,r})=>{const h=this.hex(q,r);if(h&&h.t==='WATER')h.t='PLAINS'});
+    // place cities
+    const cpos=[[-6,1],[-5,-3],[-4,4],[6,-1],[5,3],[4,-4]];
+    cpos.forEach((([q,r],i)=>{
+      let h=this.hex(q,r);
+      if(!h||h.t==='WATER'||h.t==='MOUNTAIN'){
+        // find nearest passable
+        let best=null,bd=99;
+        this.map.forEach(hx=>{if(hx.t!=='WATER'&&hx.t!=='MOUNTAIN'){const d2=hdist(hx.q,hx.r,q,r);if(d2<bd){bd=d2;best=hx}}});
+        h=best;
+      }
+      if(h){h.t='CITY';h.owner=i<3?PL:AI}
+    }));
+    // ensure no impassable walls isolating both halves
+    [[-3,0],[-2,0],[-1,0],[0,0],[1,0],[2,0],[3,0]].forEach(([q,r])=>{
+      const h=this.hex(q,r);if(h&&TIMP[h.t])h.t='PLAINS';
+    });
+  }
+
+  _place(){
+    const pStarts=[{q:-6,r:1},{q:-5,r:0},{q:-6,r:2}];
+    const aStarts=[{q:6,r:-1},{q:5,r:0},{q:6,r:-2}];
+    const types=['WARRIOR','ARCHER','CAVALRY'];
+    const tryPlace=(pos,fac,type)=>{
+      let h=this.hex(pos.q,pos.r);
+      if(!h||TIMP[h.t]||h.unit){
+        for(const n of hnbrs(pos.q,pos.r)){h=this.hex(n.q,n.r);if(h&&!TIMP[h.t]&&!h.unit)break}
+      }
+      if(!h||TIMP[h.t]||h.unit)return;
+      const u=new Unit(type,fac,h.q,h.r);h.unit=u;this.units.push(u);
+    };
+    pStarts.forEach((p,i)=>tryPlace(p,PL,types[i]));
+    aStarts.forEach((p,i)=>tryPlace(p,AI,types[i]));
+  }
+
+  _vis(){
+    this.map.forEach(h=>{h.vis[PL]=false;h.vis[AI]=false});
+    this.units.forEach(u=>{
+      if(!u.alive)return;
+      hinradius(u.q,u.r,3).forEach(({q,r})=>{const h=this.hex(q,r);if(h){h.vis[u.fac]=true;h.seen[u.fac]=true}});
+    });
+    this.map.forEach(h=>{
+      if(h.t==='CITY'&&h.owner!==null)
+        hinradius(h.q,h.r,2).forEach(({q,r})=>{const hh=this.hex(q,r);if(hh){hh.vis[h.owner]=true;hh.seen[h.owner]=true}});
+    });
+  }
+
+  reach4(unit){
+    const visited=new Map();
+    const q=[{q:unit.q,r:unit.r,mp:unit.mpleft}];
+    visited.set(hkey(unit.q,unit.r),unit.mpleft);
+    const res=new Set();
+    while(q.length){
+      const {q:cq,r:cr,mp}=q.shift();
+      hnbrs(cq,cr).forEach(({q:nq,r:nr})=>{
+        const h=this.hex(nq,nr);if(!h)return;
+        if(TIMP[h.t])return;
+        if(UDEFS[unit.type].noCav&&TNOCAV[h.t])return;
+        if(h.unit&&h.unit.fac!==unit.fac)return;
+        const cost=TMOVE[h.t];const rem=mp-cost;if(rem<0)return;
+        const k=hkey(nq,nr);
+        if(!visited.has(k)||visited.get(k)<rem){visited.set(k,rem);res.add(k);q.push({q:nq,r:nr,mp:rem})}
+      });
+    }
+    const out=new Set();
+    res.forEach(k=>{const h=this.map.get(k);if(h&&(!h.unit||h.unit===unit))out.add(k)});
+    return out;
+  }
+
+  atk4(unit){
+    const res=new Set();
+    if(!unit.canAtk)return res;
+    hinradius(unit.q,unit.r,unit.rng).forEach(({q,r})=>{
+      const h=this.hex(q,r);
+      if(!h||!h.unit||h.unit.fac===unit.fac)return;
+      if(unit.rng>1){
+        const line=hline(unit.q,unit.r,q,r);
+        for(let i=1;i<line.length-1;i++){const lh=this.hex(line[i].q,line[i].r);if(lh&&lh.t==='MOUNTAIN')return}
+      }
+      res.add(hkey(q,r));
+    });
+    return res;
+  }
+
+  move(unit,tq,tr){
+    const from=this.hex(unit.q,unit.r);const to=this.hex(tq,tr);
+    if(!to||to.unit)return false;
+    from.unit=null;
+    unit.mpleft=Math.max(0,unit.mpleft-TMOVE[to.t]);
+    unit.q=tq;unit.r=tr;to.unit=unit;
+    if(to.t==='CITY'&&to.owner!==unit.fac){
+      to.owner=unit.fac;
+      log(`${FNAMES[unit.fac]} captured a city!`,unit.fac===PL?'le2':'la');
+    }
+    this._vis();return true;
+  }
+
+  attack(att,def){
+    if(!att.alive||!def.alive)return;
+    const ah=this.hex(att.q,att.r),dh=this.hex(def.q,def.r);
+    const dmg=Math.max(1,att.atk+(Math.random()*4|0)-def.def-(TDEF[dh.t]||0)-(Math.random()*2|0));
+    def.hp-=dmg;
+    log(`${FNAMES[att.fac]} ${att.def_.name} hits ${FNAMES[def.fac]} ${def.def_.name} for ${dmg}`,att.fac===PL?'lp':'la');
+    att.canAtk=false;
+    if(def.hp<=0){this._kill(def)}
+    else if(att.rng===1&&hdist(att.q,att.r,def.q,def.r)===1&&att.alive){
+      const cnt=Math.max(0,def.atk+(Math.random()*3|0)-att.def-(TDEF[ah.t]||0)-(Math.random()*2|0));
+      if(cnt>0){att.hp-=cnt;log(`Counter-attack for ${cnt}!`,'lw');if(att.hp<=0)this._kill(att)}
+    }
+    this._vis();this._check();
+  }
+
+  _kill(u){
+    u.hp=0;const h=this.hex(u.q,u.r);if(h)h.unit=null;
+    this.units=this.units.filter(x=>x!==u);
+    log(`${FNAMES[u.fac]} ${u.def_.name} was defeated!`,u.fac===PL?'la':'le2');
+  }
+
+  _check(){
+    if(this.over)return;
+    const pu=this.units.filter(u=>u.fac===PL);
+    const au=this.units.filter(u=>u.fac===AI);
+    let pc=0,ac=0;
+    this.map.forEach(h=>{if(h.t==='CITY'){if(h.owner===PL)pc++;else if(h.owner===AI)ac++}});
+    if(au.length===0||ac===0){this.over=true;this.winner=PL;showOv('Victory!','You defeated the enemy!')}
+    else if(pu.length===0||pc===0){this.over=true;this.winner=AI;showOv('Defeat','Your forces were destroyed.')}
+  }
+
+  collectGold(){
+    let pg=0,ag=0;
+    this.map.forEach(h=>{if(h.t==='CITY'){if(h.owner===PL)pg+=TGOLD;else if(h.owner===AI)ag+=TGOLD}});
+    this.gold[PL]+=pg;this.gold[AI]+=ag;
+    if(pg)log(`Collected ${pg} gold from cities.`,'le2');
+  }
+
+  trainUnit(type,ch){
+    const d=UDEFS[type];if(this.gold[PL]<d.cost)return false;
+    let spawn=null;
+    for(const n of hnbrs(ch.q,ch.r)){const h=this.hex(n.q,n.r);if(h&&!h.unit&&!TIMP[h.t]){spawn=h;break}}
+    if(!spawn){log('No space to spawn here.','lw');return false}
+    this.gold[PL]-=d.cost;
+    const u=new Unit(type,PL,spawn.q,spawn.r);u.mpleft=0;u.canAtk=false;
+    spawn.unit=u;this.units.push(u);
+    log(`Trained ${d.name}!`,'le2');this._vis();return true;
+  }
+
+  endPlayer(){
+    this.fac=AI;this.sel=null;this.selHex=null;
+    this.reach=new Set();this.attkbl=new Set();this.phase='sel';
+    this.units.forEach(u=>{if(u.fac===AI)u.reset()});
+    setTimeout(()=>this._aiTurn(),350);
+  }
+
+  startPlayer(){
+    this.turn++;this.fac=PL;this.collectGold();
+    this.units.forEach(u=>{if(u.fac===PL)u.reset()});
+    updateUI();render();
+  }
+
+  _aiTurn(){
+    const aiU=this.units.filter(u=>u.fac===AI&&u.alive);
+    const queue=[];
+    aiU.forEach(u=>{
+      // direct attack first
+      const dk=this.atk4(u);
+      if(dk.size>0){
+        const tk=[...dk][0];const th=this.map.get(tk);
+        if(th?.unit)queue.push({type:'atk',u,t:th.unit});
+        return;
+      }
+      // move toward best target
+      const enemies=this.units.filter(x=>x.fac===PL&&x.alive);
+      const cities=[];this.map.forEach(h=>{if(h.t==='CITY'&&h.owner===PL)cities.push(h)});
+      let goal=null,best=Infinity;
+      enemies.forEach(e=>{const d=hdist(u.q,u.r,e.q,e.r);if(d<best){best=d;goal={q:e.q,r:e.r}}});
+      cities.forEach(c=>{const d=hdist(u.q,u.r,c.q,c.r);if(d<best-2){best=d-2;goal={q:c.q,r:c.r}}});
+      if(!goal)return;
+      const reach=this.reach4(u);
+      let dest=null,destD=Infinity;
+      reach.forEach(k=>{const h=this.map.get(k);if(!h||h.unit)return;const d=hdist(h.q,h.r,goal.q,goal.r);if(d<destD){destD=d;dest=h}});
+      if(dest&&(dest.q!==u.q||dest.r!==u.r))queue.push({type:'mv',u,dest});
+      queue.push({type:'chkAtk',u});
+    });
+
+    let i=0;
+    const step=()=>{
+      if(i>=queue.length){this._aiTrain();setTimeout(()=>this.startPlayer(),300);return}
+      const a=queue[i++];
+      if(a.type==='mv'&&a.u.alive)this.move(a.u,a.dest.q,a.dest.r);
+      else if(a.type==='atk'&&a.u.alive&&a.t.alive)this.attack(a.u,a.t);
+      else if(a.type==='chkAtk'&&a.u.alive&&a.u.canAtk){
+        const dk=this.atk4(a.u);
+        if(dk.size>0){const tk=[...dk][0];const th=this.map.get(tk);if(th?.unit&&a.u.alive)this.attack(a.u,th.unit)}
+      }
+      render();setTimeout(step,180);
+    };
+    step();
+  }
+
+  _aiTrain(){
+    const types=['WARRIOR','CAVALRY','ARCHER'];
+    this.map.forEach(ch=>{
+      if(ch.t!=='CITY'||ch.owner!==AI)return;
+      const t=types[Math.random()*3|0];const cost=UDEFS[t].cost;
+      if(this.gold[AI]<cost)return;
+      for(const n of hnbrs(ch.q,ch.r)){
+        const h=this.hex(n.q,n.r);
+        if(h&&!h.unit&&!TIMP[h.t]){
+          this.gold[AI]-=cost;
+          const u=new Unit(t,AI,h.q,h.r);u.mpleft=0;h.unit=u;this.units.push(u);
+          log(`Enemy trained a ${UDEFS[t].name}.`,'la');break;
+        }
+      }
+    });
+  }
+}
+
+// ── Rendering ─────────────────────────────────────────────────────────────────
+const gc=document.getElementById('gc');const ctx=gc.getContext('2d');
+const mc=document.getElementById('mc');const mctx=mc.getContext('2d');
+let SZ=46,OX=0,OY=0;
+let drag=false,dragS={x:0,y:0};
+let G=null;
+
+function resize(){
+  const w=document.getElementById('mapwrap');
+  gc.width=w.clientWidth;gc.height=w.clientHeight;
+  OX=gc.width/2;OY=gc.height/2;
+  mc.width=198;mc.height=108;
+  render();
+}
+
+function hexPath(cx,cy,sz){
+  const p=hcorners(cx,cy,sz);
+  ctx.beginPath();ctx.moveTo(p[0].x,p[0].y);
+  for(let i=1;i<6;i++)ctx.lineTo(p[i].x,p[i].y);
+  ctx.closePath();
+}
+
+function mixc(h1,h2,t){
+  const p=h=>[parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)];
+  const [r1,g1,b1]=p(h1),[r2,g2,b2]=p(h2);
+  return`rgb(${r1+(r2-r1)*t|0},${g1+(g2-g1)*t|0},${b1+(b2-b1)*t|0})`;
+}
+
+function render(){
+  if(!G)return;
+  ctx.clearRect(0,0,gc.width,gc.height);
+  ctx.fillStyle='#06080e';ctx.fillRect(0,0,gc.width,gc.height);
+
+  G.map.forEach(h=>{
+    const{x,y}=h2p(h.q,h.r,SZ);const cx=x+OX,cy=y+OY;
+    if(cx<-SZ*2||cx>gc.width+SZ*2||cy<-SZ*2||cy>gc.height+SZ*2)return;
+
+    if(!h.seen[PL]){hexPath(cx,cy,SZ-1);ctx.fillStyle='#090c14';ctx.fill();return}
+
+    const vis=h.vis[PL];
+    const k=h.key;
+    let fill=TCOLS[h.t]||(vis?'#2a3040':'#14181f');
+    if(!vis)fill=mixc(fill,'#080c14',.55);
+
+    hexPath(cx,cy,SZ-1);
+    ctx.fillStyle=fill;ctx.fill();
+
+    let stroke='#111824';
+    if(G.reach.has(k))stroke='#2a50a0';
+    if(G.attkbl.has(k))stroke='#903030';
+    if(G.sel&&h.unit===G.sel)stroke='#70b0ff';
+    if(G.selHex===h)stroke='#d0c040';
+    ctx.strokeStyle=stroke;ctx.lineWidth=1.5;ctx.stroke();
+
+    // highlight overlay
+    if(G.reach.has(k)){hexPath(cx,cy,SZ-1);ctx.fillStyle='rgba(40,90,200,.22)';ctx.fill()}
+    if(G.attkbl.has(k)){hexPath(cx,cy,SZ-1);ctx.fillStyle='rgba(200,50,50,.28)';ctx.fill()}
+
+    if(!vis)return;
+
+    // City icon
+    if(h.t==='CITY'){
+      const oc=h.owner!==null?FCOLS[h.owner]:'#888';
+      ctx.fillStyle='#2a1c0a';ctx.fillRect(cx-9,cy-8,18,12);
+      ctx.strokeStyle=oc;ctx.lineWidth=1.5;ctx.strokeRect(cx-9,cy-8,18,12);
+      for(let i=0;i<3;i++){ctx.fillStyle='#3a2510';ctx.fillRect(cx-8+i*6,cy-12,4,5);ctx.strokeStyle=oc;ctx.strokeRect(cx-8+i*6,cy-12,4,5)}
+      ctx.fillStyle=oc;ctx.fillRect(cx+4,cy-17,6,5);
+      ctx.fillStyle='#555';ctx.fillRect(cx+5,cy-17,1,8);
+    }
+
+    // Terrain label (tiny)
+    if(SZ>50){
+      ctx.fillStyle='rgba(255,255,255,.12)';
+      ctx.font=`${SZ*.14|0}px sans-serif`;
+      ctx.textAlign='center';ctx.textBaseline='bottom';
+      ctx.fillText(h.t[0],cx,cy+SZ*.55);
+    }
+
+    // Unit
+    if(h.unit){
+      const u=h.unit;const def=u.def_;
+      const tired=u.mpleft===0&&!u.canAtk;
+      ctx.globalAlpha=tired?.55:1;
+      const r=SZ*.3;
+      ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);
+      ctx.fillStyle=u.fac===PL?'#0e2040':'#400e0e';ctx.fill();
+      ctx.strokeStyle=FCOLS[u.fac];ctx.lineWidth=2;ctx.stroke();
+      ctx.fillStyle=def.col;
+      ctx.font=`bold ${SZ*.28|0}px monospace`;
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.fillText(def.sym,cx,cy);
+      // HP bar
+      const bw=SZ*.68,bh=3,bx=cx-bw/2,by=cy+r+4;
+      const f=u.hp/u.maxhp;
+      ctx.fillStyle='#1a1a2a';ctx.fillRect(bx,by,bw,bh);
+      ctx.fillStyle=f>.5?'#40b840':f>.25?'#d0b030':'#c03030';
+      ctx.fillRect(bx,by,bw*f,bh);
+      ctx.globalAlpha=1;
+    }
+  });
+
+  renderMM();
+}
+
+function renderMM(){
+  const mw=mc.width,mh=mc.height;
+  mctx.fillStyle='#050810';mctx.fillRect(0,0,mw,mh);
+  const msz=3.2,mox=mw/2,moy=mh/2;
+  G.map.forEach(h=>{
+    if(!h.seen[PL])return;
+    const{x,y}=h2p(h.q,h.r,msz*1.15);
+    const cx=x+mox,cy=y+moy;
+    let col=TCOLS[h.t]||'#333';
+    if(!h.vis[PL])col=mixc(col,'#050810',.6);
+    mctx.fillStyle=col;mctx.fillRect(cx-msz/2,cy-msz/2,msz,msz);
+    if(h.unit){mctx.fillStyle=FCOLS[h.unit.fac];mctx.fillRect(cx-2,cy-2,4,4)}
+  });
+  // viewport rect
+  mctx.strokeStyle='rgba(255,255,255,.25)';mctx.lineWidth=1;
+  const vl=-OX/SZ*msz*1.15,vt=-OY/SZ*msz*1.15;
+  const vw=gc.width/SZ*msz*1.15,vh=gc.height/SZ*msz*1.15;
+  mctx.strokeRect(mox+vl,moy+vt,vw,vh);
+}
+
+// ── Input ─────────────────────────────────────────────────────────────────────
+const mw=document.getElementById('mapwrap');
+mw.addEventListener('mousedown',e=>{
+  if(e.button===1||e.button===2){drag=true;dragS={x:e.clientX-OX,y:e.clientY-OY};e.preventDefault();return}
+  if(G?.over||e.button!==0)return;
+  handleClick(e);
+});
+mw.addEventListener('mousemove',e=>{
+  if(drag){OX=e.clientX-dragS.x;OY=e.clientY-dragS.y;render();return}
+  handleHover(e);
+});
+mw.addEventListener('mouseup',e=>{if(e.button===1||e.button===2)drag=false});
+mw.addEventListener('mouseleave',()=>{drag=false;document.getElementById('tip').style.display='none'});
+mw.addEventListener('contextmenu',e=>{
+  e.preventDefault();
+  if(!G)return;
+  G.sel=null;G.selHex=null;G.reach=new Set();G.attkbl=new Set();G.phase='sel';
+  updateUI();render();
+});
+mw.addEventListener('wheel',e=>{
+  e.preventDefault();
+  const rect=gc.getBoundingClientRect();
+  const mx=e.clientX-rect.left,my=e.clientY-rect.top;
+  const f=e.deltaY<0?1.14:.878;
+  const nSZ=Math.min(90,Math.max(18,SZ*f));
+  const r2=nSZ/SZ;
+  OX=mx-(mx-OX)*r2;OY=my-(my-OY)*r2;SZ=nSZ;render();
+},{passive:false});
+
+function mouseHex(e){
+  const rect=gc.getBoundingClientRect();
+  const{q,r}=p2h(e.clientX-rect.left-OX,e.clientY-rect.top-OY,SZ);
+  return G.hex(q,r);
+}
+
+function handleClick(e){
+  if(!G||G.fac!==PL)return;
+  const h=mouseHex(e);if(!h)return;
+  const k=h.key;
+
+  if(G.phase==='sel'){
+    if(h.unit?.fac===PL)selUnit(h.unit);
+    else if(h.t==='CITY'&&h.owner===PL)selCity(h);
+    else{G.sel=null;G.selHex=null;updateSelInfo(h)}
+  }else if(G.phase==='move'){
+    if(G.attkbl.has(k)&&h.unit){doAtk(G.sel,h.unit);return}
+    if(G.reach.has(k)&&!h.unit){
+      G.move(G.sel,h.q,h.r);
+      G.reach=new Set();
+      G.attkbl=G.atk4(G.sel);
+      G.phase=G.attkbl.size?'atk':'sel';
+      if(G.phase==='sel'){G.sel=null;G.attkbl=new Set()}
+      updateUI();render();
+    }else if(h.unit?.fac===PL&&h.unit!==G.sel)selUnit(h.unit);
+    else{G.sel=null;G.reach=new Set();G.attkbl=new Set();G.phase='sel';updateUI();render()}
+  }else if(G.phase==='atk'){
+    if(G.attkbl.has(k)&&h.unit)doAtk(G.sel,h.unit);
+    else if(h.unit?.fac===PL)selUnit(h.unit);
+    else{G.attkbl=new Set();G.phase='sel';G.sel=null;updateUI();render()}
+  }
+}
+
+function doAtk(att,def){
+  G.attack(att,def);
+  G.attkbl=new Set();G.reach=new Set();G.phase='sel';G.sel=null;
+  updateUI();render();
+}
+
+function handleHover(e){
+  const tip=document.getElementById('tip');
+  if(!G){tip.style.display='none';return}
+  const h=mouseHex(e);
+  if(!h||!h.seen[PL]){tip.style.display='none';return}
+  let s=`<strong>${h.t}</strong>`;
+  if(h.t==='CITY')s+=`<br>Owner: ${h.owner!==null?FNAMES[h.owner]:'Neutral'}<br>Gold/turn: ${TGOLD}`;
+  const tdef=TDEF[h.t]||0;if(tdef)s+=`<br>Defense +${tdef}`;
+  if(h.unit&&h.vis[PL]){
+    const u=h.unit;const d=u.def_;
+    s+=`<br><span style="color:${FCOLS[u.fac]}">${FNAMES[u.fac]} ${d.name}</span>`;
+    s+=`<br>HP: ${u.hp}/${u.maxhp} &nbsp; ATK: ${u.atk}`;
+    s+=`<br>DEF: ${u.def+tdef} &nbsp; Move: ${u.mpleft}/${d.mv}`;
+    s+=`<br>Range: ${d.rng}`;
+  }
+  tip.innerHTML=s;tip.style.display='block';
+  tip.style.left=(e.clientX+14)+'px';tip.style.top=(e.clientY-10)+'px';
+}
+
+function selUnit(unit){
+  G.sel=unit;G.selHex=null;
+  G.reach=unit.mpleft>0?G.reach4(unit):new Set();
+  G.attkbl=unit.canAtk?G.atk4(unit):new Set();
+  G.phase='move';updateUI();render();
+}
+
+function selCity(h){G.sel=null;G.selHex=h;G.reach=new Set();G.attkbl=new Set();G.phase='sel';updateUI();render()}
+
+// ── UI ────────────────────────────────────────────────────────────────────────
+function updateUI(){
+  if(!G)return;
+  document.getElementById('goldv').textContent=G.gold[PL];
+  let pc=0,pu=0;
+  G.map.forEach(h=>{if(h.t==='CITY'&&h.owner===PL)pc++});
+  G.units.forEach(u=>{if(u.fac===PL)pu++});
+  document.getElementById('citiesv').textContent=pc;
+  document.getElementById('unitsv').textContent=pu;
+  document.getElementById('turnlbl').textContent=`Turn ${G.turn}`;
+  const fl=document.getElementById('factionlbl');
+  const eb=document.getElementById('endturn');
+  if(G.fac===PL){fl.textContent='YOUR TURN';fl.style.cssText='background:#122a50;color:#60a8e0;padding:3px 10px;border-radius:4px;font-size:11px;font-weight:700';eb.disabled=false}
+  else{fl.textContent='ENEMY TURN';fl.style.cssText='background:#3a1010;color:#d05050;padding:3px 10px;border-radius:4px;font-size:11px;font-weight:700';eb.disabled=true}
+  updatePanel();
+}
+
+function updatePanel(){
+  const si=document.getElementById('selinfo');
+  const as=document.getElementById('actionsec');const ts=document.getElementById('trainsec');
+  as.style.display='none';ts.style.display='none';
+
+  if(G.sel){
+    const u=G.sel;const d=u.def_;
+    si.innerHTML=`<strong style="color:${FCOLS[u.fac]}">${d.name}</strong><br>
+HP: <b>${u.hp}</b>/${u.maxhp}<br>
+ATK: ${u.atk} &nbsp; DEF: ${u.def}<br>
+Move: ${u.mpleft}/${d.mv} &nbsp; Rng: ${d.rng}<br>
+<span style="color:${u.canAtk?'#70c060':'#c07070'}">${u.canAtk?'Ready to attack':'Attacked this turn'}</span>`;
+    if(G.fac===PL&&u.fac===PL){
+      as.style.display='block';
+      const ua=document.getElementById('unitacts');ua.innerHTML='';
+      const mkbtn=(txt,cls,dis,fn)=>{
+        const b=document.createElement('button');b.className='abtn'+(cls?' '+cls:'');
+        b.textContent=txt;b.disabled=dis;if(!dis)b.onclick=fn;ua.appendChild(b);
+      };
+      mkbtn(`⟶ Move (${u.mpleft} MP)`,G.phase==='move'?'on':'',u.mpleft===0,()=>{
+        G.phase='move';G.reach=G.reach4(u);G.attkbl=new Set();render();
+      });
+      mkbtn('⚔ Attack',G.phase==='atk'?'on':'',!u.canAtk,()=>{
+        G.phase='atk';G.attkbl=G.atk4(u);G.reach=new Set();render();
+      });
+      mkbtn('⏸ Wait','',false,()=>{
+        u.mpleft=0;u.canAtk=false;G.sel=null;G.reach=new Set();G.attkbl=new Set();G.phase='sel';updateUI();render();
+      });
+    }
+  }else if(G.selHex){
+    const h=G.selHex;
+    si.innerHTML=`<strong style="color:#d4a820">City</strong><br>
+Owner: <b style="color:${h.owner!==null?FCOLS[h.owner]:'#888'}">${h.owner!==null?FNAMES[h.owner]:'Neutral'}</b><br>
+Gold/turn: ${TGOLD} &nbsp; Def: +${TDEF.CITY}`;
+    if(G.fac===PL&&h.owner===PL&&!h.unit){
+      ts.style.display='block';
+      const tl=document.getElementById('trainlist');tl.innerHTML='';
+      Object.entries(UDEFS).forEach(([type,d])=>{
+        const can=G.gold[PL]>=d.cost;
+        const el=document.createElement('div');
+        el.className='titem'+(can?'':' cant');
+        el.innerHTML=`<span style="color:${d.col};font-weight:700">${d.sym}</span><span class="tn">${d.name}</span><span class="tc">${d.cost}g</span>`;
+        if(can)el.onclick=()=>{G.trainUnit(type,h);updateUI();render()};
+        tl.appendChild(el);
+      });
+    }else if(h.unit&&h.unit.fac===PL){
+      si.innerHTML+=`<br><i style="color:#a090c0">Unit on city — move it first to train.</i>`;
+    }
+  }else{
+    si.textContent='Click a unit or your city.';
+  }
+}
+
+function updateSelInfo(h){
+  document.getElementById('selinfo').innerHTML=
+    `<strong>${h.t}</strong>${h.unit&&h.vis[PL]?`<br>${FNAMES[h.unit.fac]} ${h.unit.def_.name} (HP:${h.unit.hp})`:''}`;}
+
+function log(msg,cls=''){
+  const w=document.getElementById('logwrap');
+  const d=document.createElement('div');d.className='le '+(cls||'');d.textContent=msg;
+  w.appendChild(d);w.scrollTop=w.scrollHeight;
+  while(w.children.length>60)w.removeChild(w.firstChild);
+}
+
+function showOv(title,msg){
+  const o=document.getElementById('ov');
+  document.getElementById('ovtitle').textContent=title;
+  document.getElementById('ovtitle').style.color=title==='Victory!'?'#50d050':'#e05050';
+  document.getElementById('ovmsg').textContent=msg;
+  o.classList.add('show');
+}
+
+// ── Boot ─────────────────────────────────────────────────────────────────────
+document.getElementById('endturn').onclick=()=>{
+  if(!G||G.fac!==PL||G.over)return;
+  G.sel=null;G.selHex=null;G.reach=new Set();G.attkbl=new Set();G.phase='sel';
+  log(`─── End of Turn ${G.turn} ───`);
+  G.endPlayer();updateUI();render();
+};
+
+document.getElementById('ovbtn').onclick=()=>{
+  document.getElementById('ov').classList.remove('show');
+  document.getElementById('logwrap').innerHTML='';
+  init();
+};
+
+function init(){
+  G=new Game();SZ=46;
+  resize();updateUI();
+  // center on player
+  const pu=G.units.find(u=>u.fac===PL);
+  if(pu){const{x,y}=h2p(pu.q,pu.r,SZ);OX=gc.width/2-x;OY=gc.height/2-y}
+  render();
+  log('Welcome to Hex Conquest!','le2');
+  log('Select a unit → move (blue) or attack (red).','');
+  log('Click your cities to train units.','');
+  log('Capture all enemy cities or destroy all enemy units to win.','');
+}
+
+window.addEventListener('resize',resize);
+init();
+</script>
+</body>
+</html>
